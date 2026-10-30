@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "canvas": [
+    600,
+    600
+  ],
+  "tabs": [
+    "hair",
+    "eyes",
+    "mouth",
+    "accessory",
+    "clothes"
+  ],
+  "male_head": 0,
+  "female_heads": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "head_sheets": [
+    "open-soft",
+    "closed-soft",
+    "open-wide",
+    "closed-wide"
+  ],
+  "sheet_grid": [
+    3,
+    2
+  ],
+  "cell": [
+    512,
+    512
+  ],
+  "eye_registration": [
+    [
+      266.3,
+      301.1,
+      124.4
+    ],
+    [
+      258.3,
+      306.3,
+      119.8
+    ],
+    [
+      269.8,
+      301.1,
+      119.3
+    ],
+    [
+      268,
+      280.6,
+      123.7
+    ],
+    [
+      257.6,
+      281.3,
+      120.4
+    ],
+    [
+      256.6,
+      281.3,
+      120.9
+    ]
+  ],
+  "target_eye_span": 104,
+  "target_eye_y_from_neck": -136,
+  "target_neck_y": 374,
+  "glasses": {
+    "width": 200,
+    "y_from_neck": -136,
+    "temples": false
+  },
+  "hat": {
+    "width": 315,
+    "height": 180,
+    "bottom_from_neck": -174
+  },
+  "accessory_source_rectangles": [
+    [
+      0,
+      0,
+      512,
+      512
+    ],
+    [
+      512,
+      0,
+      512,
+      512
+    ],
+    [
+      1024,
+      0,
+      512,
+      512
+    ],
+    [
+      0,
+      512,
+      570,
+      512
+    ],
+    [
+      570,
+      512,
+      454,
+      512
+    ],
+    [
+      1024,
+      512,
+      512,
+      512
+    ]
+  ],
+  "clothing_hues": [
+    null,
+    200,
+    145,
+    272,
+    340,
+    25
+  ]
+}

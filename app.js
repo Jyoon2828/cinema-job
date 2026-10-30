@@ -8,31 +8,22 @@ const jobs=[
 {n:'영화 편집자',i:'✂️',tag:'장면을 이어 이야기를 만드는 사람',work:'촬영한 영상 중 필요한 부분을 고르고 순서와 길이를 조절해 이야기가 잘 전달되도록 연결합니다.',skills:['이야기를 이해하는 힘','꼼꼼함','편집 도구 활용 능력'],tools:'편집 프로그램, 컴퓨터, 영상',question:'장면의 순서를 바꾸면 이야기가 어떻게 달라질까요?'},
 {n:'시나리오 작가',i:'✍️',tag:'영화의 첫 이야기를 쓰는 사람',work:'영화의 인물과 사건을 구상하고 장면, 행동, 대사를 시나리오로 씁니다. 의견을 듣고 이야기를 고쳐 완성합니다.',skills:['상상력','글로 표현하는 힘','사람을 관찰하는 힘'],tools:'노트, 시나리오, 컴퓨터',question:'평범한 학교에서 신기한 사건이 생긴다면 어떤 이야기일까요?'}];
 let state={job:0,step:0,name:'',work:'',ability:'',wish:'',theme:0,style:0,zoom:1,px:0,py:0,angle:0};try{Object.assign(state,JSON.parse(localStorage.getItem('filmcareers-v1')||'{}'));state.step=0;state.job=Math.max(0,Math.min(7,+state.job||0))}catch{}
-const colors=['#9274ae','#6b98ac','#ce8b9c','#be9a54'];const photo=new Image(),atlases=[new Image(),new Image()];let atlas=atlases[0];let hasPhoto=false,ready=false,stream=null;const $=s=>document.querySelector(s),stage=$('#stage'),card=$('#card'),ctx=card.getContext('2d');atlases.forEach((a,i)=>{a.src='assets/careers-'+i+'.png';a.onload=()=>{if(i===state.style){atlas=a;ready=true}draw()};a.onerror=()=>toast('그림을 불러오지 못했어요. 새로고침해 주세요.')});state.style=state.style===1?1:0;atlas=atlases[state.style];const steps=['직업 탐색','내 얼굴 만들기','조사 내용','카드 완성'];
-let faceMode=state.faceMode==='avatar'?'avatar':'photo',avatarTab='hair';state.avatar={...avatarDefaults(),...(state.avatar||{})};for(const [key,,opts]of avatarGroups())state.avatar[key]=Math.max(0,Math.min(opts.length-1,Math.floor(+state.avatar[key]||0)));
-// All components share a chin/neck origin. Rectangles refer to the actual
-// cropped WebP images, rather than the dimensions of their source sheet.
-const avatarHairMeta=[
- {x:-175,y:-345,width:350},
- {x:-175,y:-332,width:350},
- {x:-220,y:-350,width:440},
- {x:-175,y:-332,width:350},
- {x:-175,y:-380,width:410},
- {x:-220,y:-333,width:440}
-];
-const avatarArt={};let avatarArtFailed=false;
-const avatarSkinFilters=['brightness(1.10) saturate(.85)','none','brightness(.90) saturate(1.08)','brightness(.77) saturate(1.1)','brightness(.64) saturate(1.1)','brightness(.52) saturate(1.08)'];
-const costumeAtlases=[new Image(),new Image()];
-// The top of each neck was measured in the cleaned 600 × 600 costume cell.
-// Keeping this registration separate from photo masks prevents head drift.
+const colors=['#9274ae','#6b98ac','#ce8b9c','#be9a54'];const careerSources=['assets/careers-male-v3.webp','assets/careers-1.png'];const photo=new Image(),atlases=[new Image(),new Image()];let atlas=atlases[0];let hasPhoto=false,ready=false,stream=null;const $=s=>document.querySelector(s),stage=$('#stage'),card=$('#card'),ctx=card.getContext('2d');atlases.forEach((a,i)=>{a.src=careerSources[i];a.onload=()=>{if(i===state.style){atlas=a;ready=true}draw()};a.onerror=()=>toast('그림을 불러오지 못했어요. 새로고침해 주세요.')});state.style=state.style===1?1:0;atlas=atlases[state.style];const steps=['직업 탐색','내 얼굴 만들기','조사 내용','카드 완성'];
+let faceMode=state.faceMode==='avatar'?'avatar':'photo',avatarTab='hair',accessoryTab='glasses';
+state.avatar=normalizeAvatar(state.avatar);
+const costumeAtlases=[new Image(),new Image()],headAtlases={},accessoryAtlas=new Image();
 const avatarCostumeMaps=[
  [[292,314,371],[300,308,356],[315,322,370],[260,321,372],[253,264,323],[307,273,332],[214,290,347],[314,294,350]],
  [[298,318,379],[300,319,372],[287,321,363],[368,319,388],[344,310,397],[298,290,355],[338,297,370],[315,305,369]]
 ];
-function avatarArtReady(){return Object.values(avatarArt).length===29&&Object.values(avatarArt).every(im=>im.complete&&im.naturalWidth>0)&&costumeAtlases.every(im=>im.complete&&im.naturalWidth>0)}
+const headRegistration=[[266.3,301.1,124.4],[258.3,306.3,119.8],[269.8,301.1,119.3],[268.0,280.6,123.7],[257.6,281.3,120.4],[256.6,281.3,120.9]];
+const clothingOptions=[['원래 색',null],['하늘색',200],['초록색',145],['보라색',272],['분홍색',340],['주황색',25]];
+function avatarArtReady(){return costumeAtlases.every(im=>im.complete&&im.naturalWidth)&&Object.keys(headAtlases).length===4&&Object.values(headAtlases).every(im=>im.complete&&im.naturalWidth)&&accessoryAtlas.complete&&accessoryAtlas.naturalWidth>0}
 function refreshAvatarArt(){if(avatarArtReady()){if(state.step===1&&faceMode==='avatar')render();else draw()}}
-costumeAtlases.forEach((im,i)=>{im.onload=()=>{costumeCache?.clear();refreshAvatarArt()};im.onerror=()=>{avatarArtFailed=true;toast('의상 그림을 불러오지 못했어요. 새로고침해 주세요.')};im.src='assets/avatar-costumes-'+i+'.webp'});
-for(const [prefix,n]of [['hair',6],['face',3],['eyes',4],['brows',4],['nose',4],['mouth',4],['accessory',4]])for(let i=0;i<n;i++){const key=prefix+'-'+i,im=new Image();avatarArt[key]=im;im.onload=()=>{if(avatarArtReady()){if(state.step===1&&faceMode==='avatar')render();else draw()}};im.onerror=()=>{avatarArtFailed=true;toast('꾸밈 그림을 불러오지 못했어요. 새로고침해 주세요.')};im.src='assets/avatar/'+key+'.webp'}
+function loadAvatarArt(im,path){im.onload=refreshAvatarArt;im.onerror=()=>toast('꾸미기 그림을 불러오지 못했어요. 새로고침해 주세요.');im.src=path}
+costumeAtlases.forEach((im,i)=>loadAvatarArt(im,'assets/avatar-costumes-'+i+'.webp'));
+for(const expression of ['open-soft','closed-soft','open-wide','closed-wide']){const im=new Image();headAtlases[expression]=im;loadAvatarArt(im,'assets/avatar-v3/heads-'+expression+'.webp')}
+loadAvatarArt(accessoryAtlas,'assets/avatar-v3/accessories.webp');
 
 function persist(){state.faceMode=faceMode;let t={...state};delete t.step;try{localStorage.setItem('filmcareers-v1',JSON.stringify(t))}catch{}}
 function toast(s){$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3000)}
@@ -55,7 +46,7 @@ function bindInfo(root,refresh){root.querySelector('[data-prev]').onclick=()=>{i
 function openInfo(){const d=$('#infoDialog');d.showModal();refreshInfo()}
 function refreshInfo(){const r=$('#dialogContent');r.innerHTML=infoContent();bindInfo(r,refreshInfo)}
 function render(){document.body.dataset.faceMode=faceMode;document.body.dataset.stage=state.step;document.querySelector('.steps').innerHTML=steps.map((s,i)=>`<button class="step ${state.step===i?'active':''}" data-step="${i}"><b>${i+1}</b>${s}</button>`).join('');document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>go(+b.dataset.step));atlas=atlases[state.style||0];ready=atlas.complete&&atlas.naturalWidth>0;const j=jobs[state.job];
-if(state.step===0){stage.innerHTML=`<div class="stageHeading"><h2>어떤 일을 해보고 싶나요?</h2><div class="compactVariants">${variantPicker()}</div></div><div class="explore"><div class="jobs">${jobs.map((a,i)=>`<button class="job ${state.job===i?'selected':''}" data-job="${i}"><span class="jobart" style="background-image:url(assets/careers-${state.style||0}.png);background-position:${(i%4)*100/3}% ${Math.floor(i/4)*100}%"></span><span>${a.n}</span></button>`).join('')}</div><section class="infoDeck"><div class="careerTitle">${j.i} ${j.n}</div><div class="infoTabs"><button data-info="0">소개</button><button data-info="2">능력</button><button data-info="4">현장</button><button data-info="8">체험</button><button data-info="9">직업 자료</button></div><div id="infoContent">${infoContent()}</div></section></div><div class="bottom"><span class="muted">${j.tag}</span><button class="primary" id="next">이 직업으로 만들기 →</button></div>`;document.querySelectorAll('[data-job]').forEach(b=>b.onclick=()=>{state.job=+b.dataset.job;infoPage=0;state.zoom=1;state.px=state.py=state.angle=0;persist();render()});document.querySelectorAll('[data-info]').forEach(b=>b.onclick=()=>{infoPage=+b.dataset.info;render()});bindInfo($('#infoContent'),render);$('#next').onclick=()=>go(1)}
+if(state.step===0){stage.innerHTML=`<div class="stageHeading"><h2>어떤 일을 해보고 싶나요?</h2><div class="compactVariants">${variantPicker()}</div></div><div class="explore"><div class="jobs">${jobs.map((a,i)=>`<button class="job ${state.job===i?'selected':''}" data-job="${i}"><span class="jobart" style="background-image:url(${careerSources[state.style||0]});background-position:${(i%4)*100/3}% ${Math.floor(i/4)*100}%"></span><span>${a.n}</span></button>`).join('')}</div><section class="infoDeck"><div class="careerTitle">${j.i} ${j.n}</div><div class="infoTabs"><button data-info="0">소개</button><button data-info="2">능력</button><button data-info="4">현장</button><button data-info="8">체험</button><button data-info="9">직업 자료</button></div><div id="infoContent">${infoContent()}</div></section></div><div class="bottom"><span class="muted">${j.tag}</span><button class="primary" id="next">이 직업으로 만들기 →</button></div>`;document.querySelectorAll('[data-job]').forEach(b=>b.onclick=()=>{state.job=+b.dataset.job;infoPage=0;state.zoom=1;state.px=state.py=state.angle=0;persist();render()});document.querySelectorAll('[data-info]').forEach(b=>b.onclick=()=>{infoPage=+b.dataset.info;render()});bindInfo($('#infoContent'),render);$('#next').onclick=()=>go(1)}
 if(state.step===1&&faceMode==='avatar'){renderAvatar()}
 if(state.step===1&&faceMode==='photo'){stage.innerHTML=`<div class="stageHeading"><h2>내 얼굴 만들기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="photoeditor"><div class="portraitWrap"><canvas id="portrait" width="600" height="600" aria-label="사진을 손가락으로 끌어 이동하세요"></canvas></div><div class="controls"><label class="filelabel">사진 불러오기<input id="file" type="file" accept="image/*" hidden></label><div class="buttonrow"><button id="camera">카메라 촬영</button><button id="remove">사진 지우기</button></div><div class="sliders">${[['zoom','크기','.5','3','.01'],['angle','회전','-35','35','1'],['px','좌우','-150','150','1'],['py','위아래','-150','150','1']].map(([k,l,min,max,step])=>`<label>${l}<input id="${k}" type="range" min="${min}" max="${max}" step="${step}" value="${state[k]}"></label>`).join('')}</div><button id="resetPhoto">위치 초기화</button><p class="note">얼굴 부분을 끌어서 이동할 수 있어요.<br>사진은 내 기기에서만 처리해요.</p></div></div><div class="bottom"><button id="back">← 직업 탐색</button><button class="primary" id="next">조사 내용 정리 →</button></div>`;$('#file').onchange=e=>loadFile(e.target.files[0]);$('#camera').onclick=openCamera;$('#remove').onclick=()=>{hasPhoto=false;draw()};['zoom','angle','px','py'].forEach(k=>$('#'+k).oninput=e=>{state[k]=+e.target.value;draw()});$('#resetPhoto').onclick=()=>{state.zoom=1;state.px=state.py=state.angle=0;render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);const pc=$('#portrait');let last=null;pc.onpointerdown=e=>{if(!hasPhoto)return;pc.setPointerCapture(e.pointerId);last={x:e.clientX,y:e.clientY}};pc.onpointermove=e=>{if(!last)return;const f=600/pc.clientWidth;state.px=Math.max(-150,Math.min(150,state.px+(e.clientX-last.x)*f));state.py=Math.max(-150,Math.min(150,state.py+(e.clientY-last.y)*f));last={x:e.clientX,y:e.clientY};$('#px').value=state.px;$('#py').value=state.py;draw()};pc.onpointerup=pc.onpointercancel=()=>last=null}
 if(state.step===2){const fields=[['name','만든 사람','이름 또는 별명',16],['work','이 직업이 하는 일','어떤 일을 맡고, 무엇을 만드나요?',140],['ability','필요한 능력과 태도','어떤 힘과 태도가 필요할까요?',110],['wish','내가 해보고 싶은 일','이 직업을 맡는다면 무엇을 해보고 싶나요?',110]], [k,l,h,m]=fields[writePage];stage.innerHTML=`<div class="stageHeading"><h2>내가 알아본 ${j.n}</h2><button id="readInfo">자료 보기</button></div><div class="writeTabs">${fields.map((f,i)=>`<button data-write="${i}" class="${writePage===i?'active':''}">${i+1}. ${f[1]}</button>`).join('')}</div><div class="writing"><label for="${k}">${l}<small>${m}자 이내</small></label><p>${h}</p>${k==='name'?`<input id="name" maxlength="16" placeholder="이름 또는 별명" value="${esc(state.name)}">`:`<textarea id="${k}" maxlength="${m}" placeholder="${h}">${esc(state[k])}</textarea>`}<span class="charcount">${state[k].length} / ${m}</span></div><div class="bottom"><button id="back">${writePage===0?'← 얼굴 만들기':'← 이전 항목'}</button><span>${writePage+1} / 4</span><button class="primary" id="next">${writePage===3?'카드 완성하기 →':'다음 항목 →'}</button></div>`;$('#readInfo').onclick=openInfo;document.querySelectorAll('[data-write]').forEach(b=>b.onclick=()=>{writePage=+b.dataset.write;render()});$('#'+k).oninput=e=>{state[k]=e.target.value;$('.charcount').textContent=state[k].length+' / '+m;persist();draw()};$('#back').onclick=()=>{if(writePage>0){writePage--;render()}else go(1)};$('#next').onclick=()=>{if(writePage<3){writePage++;render()}else if(!state.work.trim()||!state.ability.trim()){toast('하는 일과 필요한 능력을 적어 주세요.');writePage=!state.work.trim()?1:2;render()}else go(3)}}
@@ -72,108 +63,111 @@ function draw(){const j=jobs[state.job],accent=colors[state.theme]||colors[0];ct
 function download(){if(faceMode==='avatar'&&!avatarArtReady())return toast('꾸밈 그림을 모두 불러온 뒤 저장해 주세요.');card.toBlob(blob=>{if(!blob)return toast('이미지를 저장하지 못했어요. 다시 시도해 주세요.');const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=`영화직업카드_${jobs[state.job].n}_${(state.name||'나').replace(/[\\/:*?"<>|]/g,'')}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('이미지를 저장했어요. 다운로드 폴더를 확인해 주세요.');},'image/png')}
 
 const faceMaps=[[[0.49, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.51, 0.4, 0.165, 0.175], [0.44, 0.36, 0.165, 0.175], [0.5, 0.36, 0.165, 0.175], [0.39, 0.38, 0.165, 0.175], [0.5, 0.37, 0.165, 0.175]], [[0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.49, 0.41, 0.165, 0.175], [0.6, 0.4, 0.165, 0.175], [0.57, 0.42, 0.165, 0.175], [0.48, 0.39, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175]]];
-function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}"><span class="variantart" style="background-image:url(assets/careers-${i}.png);background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span><span>${i===0?'남':'녀'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
+function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}"><span class="variantart" style="background-image:url(${careerSources[i]});background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span><span>${i===0?'남':'녀'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
 function researchPanel(compact=false){const r=research[state.job];return `<${compact?'details':'section'} class="research">${compact?'<summary>촬영장 이야기와 자료 다시 보기</summary>':'<h3>🎞 촬영장에서는 이렇게 일해요</h3>'}<span class="phase">${r.phase}</span><ol class="daylist">${r.day.map(s=>`<li>${s}</li>`).join('')}</ol><p class="team"><b>함께 일하는 사람</b><br>${r.team}</p><div class="mission"><b>작은 직업 체험</b><p>${r.mission}</p></div><h3>🔎 진짜 영화인의 이야기</h3><p class="watch"><b>이것을 찾아보세요</b><br>${r.watch}</p><div class="resourcecards">${(r.resources||[]).map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer"><small>${l.provider}</small><strong>${l.title} ↗</strong><span>${l.note}</span></a>`).join('')}<a href="${r.url}" target="_blank" rel="noopener noreferrer"><small>${r.provider}</small><strong>${r.title} ↗</strong><span>${r.note}</span></a></div><p class="resourceNote">자료 확인: 2026.10.30 · 자료는 새 창에서 열려요.</p></${compact?'details':'section'}>`}
 
 $('#closeInfo').onclick=()=>$('#infoDialog').close();function fitViewport(){document.documentElement.style.setProperty('--app-h',(window.visualViewport?.height||innerHeight)+'px')}window.visualViewport?.addEventListener('resize',fitViewport);window.addEventListener('resize',fitViewport);fitViewport();document.fonts.ready.then(()=>draw());render();
 
 
 function faceModeTabs(){return `<div class="faceModeTabs"><button data-face-mode="photo" class="${faceMode==='photo'?'primary':''}" aria-pressed="${faceMode==='photo'}">📷 사진 넣기</button><button data-face-mode="avatar" class="${faceMode==='avatar'?'primary':''}" aria-pressed="${faceMode==='avatar'}">😊 아바타 꾸미기</button></div>`}
-// Headless costume artwork is independent of the photo-mode illustrations.
-// Both the editor and card export use this same registered composition.
-var costumeCache;
-function costumeLayer(){
- if(!costumeCache)costumeCache=new Map();const key=(state.style||0)+':'+state.job+':'+state.avatar.skin;
- if(costumeCache.has(key))return costumeCache.get(key);
- const source=costumeAtlases[state.style||0];if(!source.complete||!source.naturalWidth)return null;
- const result=document.createElement('canvas');result.width=result.height=600;
- const g=result.getContext('2d'),cw=source.naturalWidth/4,ch=source.naturalHeight/2,row=Math.floor(state.job/4);
- const [nx,neckTop,neckBottom]=avatarCostumeMaps[state.style||0][state.job],dy=374-neckBottom;
- // The painted rows have a transparent gutter below the upper costumes.
- // Cut at that gutter so the next cell never inherits a strip of clothing.
- const split=468,sy=row?split:0,sh=row?source.naturalHeight-split:split;
- g.drawImage(source,(state.job%4)*cw,sy,cw,sh,0,dy+(sy-row*ch)*600/ch,600,sh*600/ch);
- // Tint the stock neck to match the chosen skin. Retain its alpha edges so
- // the collar cannot develop holes when the face base is narrower.
- const left=Math.max(0,nx-60),top=Math.max(0,Math.floor(neckTop+dy-3)),height=Math.ceil(neckBottom-neckTop+8);
- const patch=g.getImageData(left,top,120,height),d=patch.data;
- for(let k=0;k<d.length;k+=4){const r=d[k],gr=d[k+1],b=d[k+2];if(!(r>190&&gr>110&&b>75&&r-gr>18&&gr-b>18&&gr<2*b))d[k+3]=0}
- const tint=document.createElement('canvas');tint.width=120;tint.height=height;tint.getContext('2d').putImageData(patch,0,0);
- g.save();g.filter=avatarSkinFilters[state.avatar.skin];g.drawImage(tint,left,top);g.restore();
- costumeCache.set(key,result);return result;
-}
-function drawCostume(g,x,y,w,h){
- g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle='#fffaf0';g.fillRect(x,y,w,h);
- const fit=Math.min(w/600,h/600),ox=x+(w-600*fit)/2,oy=y+(h-600*fit)/2;
- g.translate(ox,oy);g.scale(fit,fit);
- const [nx]=avatarCostumeMaps[state.style||0][state.job];
- const costume=costumeLayer();if(costume)g.drawImage(costume,0,0);
- paintAvatar(g,nx,350,state.avatar,.9);
- // Screens sit behind the head; shoulders and held tools sit in front of
- // the neck. Repaint only below the chin, never across the eyes or cheeks.
- if(costume){g.save();g.beginPath();g.rect(0,338,600,262);g.clip();g.drawImage(costume,0,0);g.restore()}
- g.restore();
-}
-function avatarDefaults(){return {face:0,skin:1,hair:0,hairColor:0,eyes:0,brows:0,nose:0,mouth:0,accessory:0}}
+function avatarDefaults(){return {version:3,hair:0,eyes:0,mouth:0,glasses:0,hat:0,pin:0,clothes:0}}
+function normalizeAvatar(value){const a=avatarDefaults();if(value?.version===3)for(const key of ['hair','eyes','mouth','glasses','hat','pin','clothes'])a[key]=Math.max(0,Math.min(({hair:4,eyes:1,mouth:1,glasses:2,hat:2,pin:2,clothes:5})[key],Math.floor(+value[key]||0)));return a}
 function avatarGroups(){return [
- ['face','얼굴형',['동글동글','달걀형','통통한 볼']],
- ['skin','피부색',['밝은 살구','#f4c7a1','#dfaa7d','#bd8059','#965e40','#70452f']],
- ['hair','머리',['짧은 머리','단발','긴 머리','곱슬머리','묶은 머리','양 갈래']],
- ['hairColor','머리색',['#34251f','#64402c','#956338','#c49052','#422d50','#9d5665']],
- ['eyes','눈',['동그란 눈','반짝이는 눈','웃는 눈','초승달 눈']],
- ['brows','눈썹',['부드럽게','일자 눈썹','씩씩하게','짧은 눈썹']],
- ['nose','코',['작은 코','동그란 코','오똑한 코','긴 코']],
- ['mouth','입',['방긋 미소','활짝 웃음','작은 미소','오! 놀라움']],
- ['accessory','안경·장식',['없음','둥근 안경','네모 안경','분홍 머리핀','별 머리핀']]]}
+ ['hair','머리',state.style===0?['기본 짧은 머리']:['단발','긴 머리','묶은 머리','양 갈래','앞머리 있는 머리']],
+ ['eyes','눈',['뜬눈','웃는 눈']],['mouth','입',['살짝 웃기','활짝 웃기']],
+ ['accessory','액세서리',[]],['clothes','옷 색깔',clothingOptions.map(o=>o[0])]
+]}
+function accessoryOptions(key){return ({glasses:['없음','둥근 안경','네모 안경'],hat:['없음','파란 모자','베이지 모자'],pin:['없음','분홍 머리핀','별 머리핀']})[key]}
 function renderAvatar(){
- const groups=avatarGroups(),item=groups.find(v=>v[0]===avatarTab)||groups[0],[key,label,options]=item;
- stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸밈 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="선택한 얼굴과 직업 의상이 합쳐진 아바타"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div><h3>${label} 고르기</h3><div class="avatarChoices">${options.map((o,i)=>`<button class="avatarChoice ${state.avatar[key]===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${state.avatar[key]===i}"><canvas width="104" height="104" aria-hidden="true"></canvas><span>${key==='skin'?'피부색 '+(i+1):key==='hairColor'?'머리색 '+(i+1):o}${state.avatar[key]===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
+ const groups=avatarGroups(),selected=groups.find(v=>v[0]===avatarTab)||groups[0],isAccessory=selected[0]==='accessory';
+ const [key,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
+ const activeIndex=key==='hair'&&state.style===0?0:state.avatar[key];
+ stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div>${key==='hair'&&state.style===0?'<p class="avatarContext">짧은 머리에 모자와 안경을 더해 보세요.</p>':''}<div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
- document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');paintAvatar(g,52,92,a,.22);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
- $('#randomAvatar').onclick=()=>{for(const [k,,opts]of groups)state.avatar[k]=Math.floor(Math.random()*opts.length);persist();render()};
+ document.querySelectorAll('[data-accessory-tab]').forEach(b=>b.onclick=()=>{accessoryTab=b.dataset.accessoryTab;render()});
+ document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{if(key!=='hair'||state.style===1)state.avatar[key]=i;persist();render()}});
+ $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===0?0:Math.floor(Math.random()*5),eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),hat:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
  $('#resetAvatar').onclick=()=>{state.avatar=avatarDefaults();persist();render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);
 }
-// Layered canvas artwork remains sharp in both the editor and exported card.
-function paintAvatar(g,nx,ny,a,scale=.9){
- if(!avatarArtReady())return;
- const sprite=(name,x,y,width,height,filter='none')=>{const im=avatarArt[name];if(!im?.naturalWidth)return;const sx=name==='accessory-2'?72:0,sw=im.naturalWidth-sx,h=height||width*im.naturalHeight/sw;g.save();g.filter=filter;g.drawImage(im,sx,0,sw,im.naturalHeight,x-width/2,y-h/2,width,h);g.restore()};
- const skinFilters=avatarSkinFilters;
- const hairFilters=['brightness(.67)','brightness(.86)','none','brightness(1.28) saturate(.85)','hue-rotate(285deg) brightness(.78)','hue-rotate(325deg) saturate(.65)'];
- g.save();g.translate(nx,ny);g.scale(scale,scale);
- const m=avatarHairMeta[a.hair],im=a.hair===4?avatarCleanHair():avatarArt['hair-'+a.hair],iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height;
- const hairLayer=()=>{g.save();g.filter=hairFilters[a.hairColor];g.drawImage(im,m.x,m.y,m.width,m.width*ih/iw);g.restore()};
- hairLayer();
- const faceWidth=[300,282,304][a.face];
- sprite('face-'+a.face,0,-120,faceWidth,300,skinFilters[a.skin]);
- // Preserve the full cheek shape beneath long hair and keep all expressions
- // at the same landmarks, independent of the hairstyle's transparent opening.
- g.save();g.beginPath();g.rect(-250,-400,500,550);g.ellipse(0,-60,119,80,0,0,Math.PI*2);g.clip('evenodd');hairLayer();g.restore();
- const pair=(name,y,width,separation,filter='none')=>{const im=avatarArt[name];for(let side=0;side<2;side++){const c=avatarComponent(name,side),h=width*c.h/c.w;g.save();g.filter=filter;g.drawImage(im,c.x,c.y,c.w,c.h,(side?separation:-separation)-width/2,y-h/2,width,h);g.restore()}};
- pair('brows-'+a.brows,-151,[32,32,31,28][a.brows],52,hairFilters[a.hairColor]);
- pair('eyes-'+a.eyes,-116,[26,30,34,32][a.eyes],52);
- sprite('nose-'+a.nose,0,-77,[13,15,13,11][a.nose],0,skinFilters[a.skin]);
- sprite('mouth-'+a.mouth,0,-48,[48,56,40,17][a.mouth],0);
- if(a.accessory===1||a.accessory===2)sprite('accessory-'+(a.accessory-1),0,-115,150,0);
- else if(a.accessory===3||a.accessory===4){g.save();g.translate(105,-216);g.rotate(.35);sprite('accessory-'+(a.accessory-1),0,0,45,0);g.restore()}
+var costumeCache,garmentMaskCache,accessorySpriteCache,headSpriteCache,foregroundCache;
+function costumeLayer(a=state.avatar,style=state.style||0,job=state.job){
+ if(!costumeCache)costumeCache=new Map();const key=style+':'+job+':'+a.clothes;if(costumeCache.has(key))return costumeCache.get(key);
+ const source=costumeAtlases[style];if(!source.complete||!source.naturalWidth)return null;
+ const result=document.createElement('canvas');result.width=result.height=600;
+ const g=result.getContext('2d',{willReadFrequently:true}),cw=source.naturalWidth/4,ch=source.naturalHeight/2,row=Math.floor(job/4),neckBottom=avatarCostumeMaps[style][job][2];
+ const sy=row?468:0,sh=row?source.naturalHeight-468:468;
+ g.drawImage(source,(job%4)*cw,sy,cw,sh,0,374-neckBottom+(sy-row*ch)*600/ch,600,sh*600/ch);
+ if(a.clothes>0)recolorGarment(g,style,job,a.clothes);
+ costumeCache.set(key,result);if(costumeCache.size>24)costumeCache.delete(costumeCache.keys().next().value);return result;
+}
+function drawCostume(g,x,y,w,h,a=state.avatar,style=state.style||0,job=state.job){
+ g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle='#fffaf0';g.fillRect(x,y,w,h);
+ const fit=Math.min(w/600,h/600);g.translate(x+(w-600*fit)/2,y+(h-600*fit)/2);g.scale(fit,fit);
+ const nx=avatarCostumeMaps[style][job][0],costume=costumeLayer(a,style,job);
+ if(costume)g.drawImage(costume,0,0);paintAvatar(g,nx,374,a,1,style);
+ const tools=foregroundTools(style,job);if(tools)g.drawImage(tools,0,0);
  g.restore();
 }
-// Alpha bounds avoid counting the blank gap between a pair as part of either eye or eyebrow.
-var avatarComponentCache;
-function avatarComponent(name,side){
- if(!avatarComponentCache)avatarComponentCache=new Map();const key=name+':'+side;if(avatarComponentCache.has(key))return avatarComponentCache.get(key);
- const im=avatarArt[name],c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const q=c.getContext('2d',{willReadFrequently:true});q.drawImage(im,0,0);const d=q.getImageData(0,0,c.width,c.height).data,from=side?Math.floor(c.width/2):0,to=side?c.width:Math.floor(c.width/2);let left=to,top=c.height,right=from,bottom=0;
- for(let y=0;y<c.height;y++)for(let x=from;x<to;x++)if(d[(y*c.width+x)*4+3]>100){left=Math.min(left,x);right=Math.max(right,x+1);top=Math.min(top,y);bottom=Math.max(bottom,y+1)}
- const result={x:left,y:top,w:Math.max(1,right-left),h:Math.max(1,bottom-top)};avatarComponentCache.set(key,result);return result;
+function paintAvatar(g,nx,ny,a,scale=1,style=state.style||0){
+ if(!avatarArtReady())return;const head=style===0?0:1+a.hair,expression=(a.eyes?'closed':'open')+'-'+(a.mouth?'wide':'soft');
+ const sprite=headSprite(head,expression);
+ g.save();g.translate(nx,ny);g.scale(scale,scale);
+ const [cx,ey,span]=headRegistration[head],unit=104/span;
+ g.save();
+ if(a.hat){g.beginPath();g.moveTo(-260,-135);g.quadraticCurveTo(-180,-130,-154,-197);g.quadraticCurveTo(0,-245,154,-197);g.quadraticCurveTo(180,-130,260,-135);g.lineTo(260,100);g.lineTo(-260,100);g.closePath();g.clip()}
+ g.drawImage(sprite,-cx*unit,-136-ey*unit,512*unit,512*unit);g.restore();
+ if(a.hat)paintAccessory(g,a.hat===1?2:3,0,-174,315,'bottom',0,180);
+ if(a.pin)paintAccessory(g,a.pin===1?4:5,102,a.hat?-169:-220,43,'center',.18);
+ if(a.glasses)paintAccessory(g,a.glasses-1,0,-136,200);
+ g.restore();
 }
-var avatarCleanHairCache;
-function avatarCleanHair(){
- if(avatarCleanHairCache)return avatarCleanHairCache;
- const im=avatarArt['hair-4'],c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const q=c.getContext('2d',{willReadFrequently:true});q.drawImage(im,0,0);const image=q.getImageData(0,0,c.width,c.height),d=image.data,w=c.width,h=c.height,seen=new Uint8Array(w*h),queue=new Int32Array(w*h);let best={area:0,left:0,top:0,right:w,bottom:h};
- for(let seed=0;seed<w*h;seed++){if(seen[seed]||d[seed*4+3]<70)continue;let start=0,end=1,left=w,top=h,right=0,bottom=0;queue[0]=seed;seen[seed]=1;
-  while(start<end){const i=queue[start++],x=i%w,y=Math.floor(i/w);left=Math.min(left,x);right=Math.max(right,x+1);top=Math.min(top,y);bottom=Math.max(bottom,y+1);for(const n of [x?i-1:-1,x<w-1?i+1:-1,y?i-w:-1,y<h-1?i+w:-1])if(n>=0&&!seen[n]&&d[n*4+3]>=70){seen[n]=1;queue[end++]=n}}
-  if(end>best.area)best={area:end,left,top,right,bottom};
+// Keep each complete head as one registered painted sprite. Neighboring
+// sheet fragments are discarded by alpha connectivity, without cutting hair.
+function headSprite(index,expression){
+ if(!headSpriteCache)headSpriteCache=new Map();const key=index+':'+expression;if(headSpriteCache.has(key))return headSpriteCache.get(key);
+ const im=headAtlases[expression],cw=im.naturalWidth/3,ch=im.naturalHeight/2,c=document.createElement('canvas');c.width=c.height=512;
+ const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,(index%3)*cw,Math.floor(index/3)*ch,cw,ch,0,0,512,512);
+ const image=g.getImageData(0,0,512,512),d=image.data,total=512*512,seen=new Uint8Array(total),queue=new Int32Array(total);let best=new Int32Array(0);
+ for(let seed=0;seed<total;seed++){if(seen[seed]||d[seed*4+3]<30)continue;let front=0,end=1;queue[0]=seed;seen[seed]=1;
+  while(front<end){const i=queue[front++],x=i%512,y=Math.floor(i/512);for(const n of [x?i-1:-1,x<511?i+1:-1,y?i-512:-1,y<511?i+512:-1,x&&y?i-513:-1,x<511&&y?i-511:-1,x&&y<511?i+511:-1,x<511&&y<511?i+513:-1])if(n>=0&&!seen[n]&&d[n*4+3]>=30){seen[n]=1;queue[end++]=n}}
+  if(end>best.length)best=queue.slice(0,end);
  }
- for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<best.left-2||x>best.right+2||y<best.top-2||y>best.bottom+2)d[(y*w+x)*4+3]=0;
- q.putImageData(image,0,0);avatarCleanHairCache=c;return c;
+ const keep=new Uint8Array(total);for(const i of best){const x=i%512,y=Math.floor(i/512);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx>=0&&xx<512&&yy>=0&&yy<512)keep[yy*512+xx]=1}}
+ for(let i=0;i<total;i++)if(!keep[i])d[i*4+3]=0;g.putImageData(image,0,0);headSpriteCache.set(key,c);return c;
 }
-
+// Held equipment and hands render in front of hair; garment colors and
+// stock necks do not. Screens remain behind the head.
+function foregroundTools(style,job){
+ if(!foregroundCache)foregroundCache=new Map();const key=style+':'+job;if(foregroundCache.has(key))return foregroundCache.get(key);
+ const base=costumeLayer(avatarDefaults(),style,job);if(!base)return null;
+ const c=document.createElement('canvas');c.width=c.height=600;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(base,0,0);
+ const image=g.getImageData(0,0,600,600),d=image.data,nx=avatarCostumeMaps[style][job][0],hue=[178,5,212,275,43,145,340,215][job];
+ for(let i=0;i<360000;i++){const x=i%600,y=Math.floor(i/600),k=i*4;
+  const region=[y>285&&x>190&&x<580,y>340&&x>140&&x<590,y>285&&x<535&&y<580,(style===0?x>450:x<220)||y>405&&x>200&&x<550,style===0?x>355||y>455&&x>230:x<250||y>455&&x<300,x<270&&y>290&&y<500||y>440,y>500,y>390||x<260&&y>285][job];
+  if(!region||!d[k+3]){d[k+3]=0;continue}
+  const[h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),diff=Math.min(Math.abs(h-hue),360-Math.abs(h-hue)),skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55,neck=(skin||h>=8&&h<=40&&s>.25)&&Math.abs(x-nx)<70&&y<374;
+  if(neck||!(s<.26||diff>35||skin))d[k+3]=0;
+ }
+ g.putImageData(image,0,0);foregroundCache.set(key,c);return c;
+}
+function accessorySprite(index){
+ if(!accessorySpriteCache)accessorySpriteCache=new Map();if(accessorySpriteCache.has(index))return accessorySpriteCache.get(index);
+ const rects=[[0,0,512,512],[512,0,512,512],[1024,0,512,512],[0,512,570,512],[570,512,454,512],[1024,512,512,512]],[sx,sy,sw,sh]=rects[index],c=document.createElement('canvas');c.width=sw;c.height=sh;
+ const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(accessoryAtlas,sx,sy,sw,sh,0,0,c.width,c.height);
+ const d=g.getImageData(0,0,c.width,c.height).data;let l=c.width,t=c.height,r=0,b=0;
+ for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(d[(y*c.width+x)*4+3]>40){l=Math.min(l,x);r=Math.max(r,x+1);t=Math.min(t,y);b=Math.max(b,y+1)}
+ const part={image:c,x:l,y:t,w:Math.max(1,r-l),h:Math.max(1,b-t)};accessorySpriteCache.set(index,part);return part;
+}
+function paintAccessory(g,index,x,y,width,align='center',angle=0,height=0){const s=accessorySprite(index),h=height||width*s.h/s.w;g.save();g.translate(x,y);g.rotate(angle);g.drawImage(s.image,s.x,s.y,s.w,s.h,-width/2,align==='bottom'?-h:-h/2,width,h);g.restore()}
+function rgbHSV(r,g,b){r/=255;g/=255;b/=255;const v=Math.max(r,g,b),min=Math.min(r,g,b),d=v-min;let h=0;if(d)h=v===r?60*((g-b)/d%6):v===g?60*((b-r)/d+2):60*((r-g)/d+4);return [(h+360)%360,v?d/v:0,v]}
+function hueRGB(h,s,v){const c=v*s,x=c*(1-Math.abs(h/60%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]}
+function garmentMask(image,style,job){
+ if(!garmentMaskCache)garmentMaskCache=new Map();const key=style+':'+job;if(garmentMaskCache.has(key))return garmentMaskCache.get(key);
+ const d=image.data,total=600*600,candidates=new Uint8Array(total),seen=new Uint8Array(total),queue=new Int32Array(total),components=[];
+ const center=[178,5,212,275,43,145,340,215][job],range=job===1?18:30;
+ for(let i=0;i<total;i++){const k=i*4;if(d[k+3]<50||i<600*310)continue;const [h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),dist=Math.min(Math.abs(h-center),360-Math.abs(h-center));const skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55;const x=i%600,y=Math.floor(i/600),light=job===4&&y<450&&(style===0?x>355:x<250),equipment=job===2&&x<430&&y<530;if(s>.2&&v>.10&&dist<=range&&!skin&&!light&&!equipment)candidates[i]=1}
+ for(let seed=0;seed<total;seed++){if(!candidates[seed]||seen[seed])continue;let start=0,end=1;queue[0]=seed;seen[seed]=1;while(start<end){const i=queue[start++],x=i%600,y=Math.floor(i/600);for(const n of [x?i-1:-1,x<599?i+1:-1,y?i-600:-1,y<599?i+600:-1])if(n>=0&&candidates[n]&&!seen[n]){seen[n]=1;queue[end++]=n}}if(end>20)components.push(queue.slice(0,end))}
+ components.sort((a,b)=>b.length-a.length);const max=components[0]?.length||0,keep=components.filter((c,i)=>job===5?i<3&&c.length>=Math.max(900,max*.12):job===2||job===6?c.length>=350:c.length>=20),mask=new Uint8Array(total);for(const c of keep)for(const i of c)mask[i]=1;
+ garmentMaskCache.set(key,mask);return mask;
+}
+function recolorGarment(g,style,job,colorIndex){const image=g.getImageData(0,0,600,600),d=image.data,mask=garmentMask(image,style,job),target=clothingOptions[colorIndex][1];for(let i=0;i<mask.length;i++)if(mask[i]){const k=i*4,[,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),rgb=hueRGB(target,s,v);d[k]=rgb[0];d[k+1]=rgb[1];d[k+2]=rgb[2]}g.putImageData(image,0,0)}
