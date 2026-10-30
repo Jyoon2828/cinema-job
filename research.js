@@ -12,7 +12,15 @@ const research=[
     "url": "https://myungworry.khan.kr/entry/작은-아이들의-거대한-세계-우리들",
     "title": "어린이 배우와 함께 만드는 영화 우리들",
     "provider": "경향신문 기자 · 취재 기록",
-    "note": "어린이 배우와 감독이 촬영 전에 상황극으로 준비한 사례를 읽어봐요."
+    "note": "어린이 배우와 감독이 촬영 전에 상황극으로 준비한 사례를 읽어봐요.",
+    "resources": [
+      {
+        "url": "https://www.career.go.kr/cloud/j/job/view?seq=10612",
+        "title": "영화감독이 하는 일과 필요한 능력",
+        "provider": "주니어 커리어넷 · 직업정보",
+        "note": "감독이 촬영을 준비하고 제작진을 이끄는 일과 필요한 적성·흥미를 살펴봐요."
+      }
+    ]
   },
   {
     "phase": "인물 준비와 촬영",
