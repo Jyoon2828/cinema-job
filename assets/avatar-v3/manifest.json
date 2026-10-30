@@ -143,5 +143,91 @@
     "hat-bucket-v2.webp",
     "accessories.webp",
     "accessories.webp"
-  ]
+  ],
+  "male_heads": [
+    0,
+    6,
+    7
+  ],
+  "male_hair_names": [
+    "기본 짧은 머리",
+    "가르마 머리",
+    "앞머리"
+  ],
+  "male_extra_sheet": {
+    "file": "heads-male-extra.webp",
+    "size": [
+      1774,
+      887
+    ],
+    "grid": [
+      4,
+      2
+    ],
+    "heads": [
+      6,
+      7
+    ],
+    "expressions": [
+      "open-soft",
+      "closed-soft",
+      "open-wide",
+      "closed-wide"
+    ],
+    "eye_registration": [
+      [
+        [
+          262.8,
+          311.1,
+          138.8
+        ],
+        [
+          266.2,
+          311.1,
+          138.8
+        ],
+        [
+          261.3,
+          311.1,
+          138.9
+        ],
+        [
+          265.4,
+          311.1,
+          138.9
+        ]
+      ],
+      [
+        [
+          262.7,
+          306.2,
+          139.2
+        ],
+        [
+          265.8,
+          306.2,
+          139.2
+        ],
+        [
+          260.3,
+          306.7,
+          138.9
+        ],
+        [
+          265.0,
+          306.7,
+          138.9
+        ]
+      ]
+    ]
+  },
+  "clothing_palette": [
+    null,
+    "#55add9",
+    "#5bb27f",
+    "#a47bc9",
+    "#db7c9c",
+    "#d99768"
+  ],
+  "clothing_rendering": "Per-costume HSL lightness normalization; fixed palette saturation; shared continuous fabric mapping for camera operators; alpha unchanged."
 }

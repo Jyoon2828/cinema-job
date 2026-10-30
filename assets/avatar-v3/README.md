@@ -4,7 +4,7 @@ The built-in image generation tool was used with the original female sound profe
 
 ## Files and registration
 
-Each head sheet is a 1536×1024 transparent 3-column × 2-row atlas:
+The four original head sheets are 1536×1024 transparent 3-column × 2-row atlases:
 
 1. Boy, original short hair
 2. Girl, bob
@@ -32,3 +32,11 @@ The original male job atlas was separately edited to use the same eye design and
 - Male job atlas: replace only the eight male characters’ eyes with the female reference eye style; retain all costumes, props, poses, layout and background.
 
 - Bucket fit revision: built-in image generation, edit target/style references `accessories.webp` and `heads-open-soft.webp`; one isolated cream/beige bucket hat worn on an invisible child, straight front view, short crown, gently sloping fabric brim, no visible oval opening/inside cavity/underside, no head or hair, warm gouache texture, transparent background. Output converted losslessly to `hat-bucket-v2.webp`.
+
+## Additional boy hairstyles
+
+`heads-male-extra.webp` is a 1774×887 transparent 4-column × 2-row atlas. Row 1 is a tidy short side part; row 2 is short downward bangs. Columns are open-soft, closed-soft, open-wide, closed-wide. Both are full painted head sprites, using the original boy as the face/eye/style reference. They are registered separately from the original six heads, preserving a target eye separation of 104px. The original short haircut stays available. Male and female selections use separate saved fields. Hair-choice thumbnails show the haircut without a hat so all three choices remain visible.
+
+Generation prompt summary: change only the original boy's hair to a neat short side part and short bangs; keep his peach face, modest dark-brown eyes/white crescents, eyebrows, pink nose, ears, neck and opaque warm gouache brushwork. Eight front-facing complete heads in four columns and two rows, identical face scale and neck alignment, four eye/mouth combinations per hairstyle, generous transparent gutters, no torso, accessories, text or background. Generated with the built-in image tool and converted losslessly to WebP.
+
+Garment recoloring uses a fixed five-color palette and per-costume lightness normalization. It preserves the original painted shading, protects the registered skin and professional equipment, and uses a continuous mapping across the camera operator's shirt and overalls. The original costume atlases are unchanged.

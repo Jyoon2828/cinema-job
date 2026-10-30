@@ -11,21 +11,24 @@ let state={job:0,step:0,name:'',work:'',ability:'',wish:'',theme:0,style:0,zoom:
 const colors=['#9274ae','#6b98ac','#ce8b9c','#be9a54'];const careerSources=['assets/careers-male-v3.webp','assets/careers-1.png'];const photo=new Image(),atlases=[new Image(),new Image()];let atlas=atlases[0];let hasPhoto=false,ready=false,stream=null;const $=s=>document.querySelector(s),stage=$('#stage'),card=$('#card'),ctx=card.getContext('2d');atlases.forEach((a,i)=>{a.src=careerSources[i];a.onload=()=>{if(i===state.style){atlas=a;ready=true}draw()};a.onerror=()=>toast('그림을 불러오지 못했어요. 새로고침해 주세요.')});state.style=state.style===1?1:0;atlas=atlases[state.style];const steps=['직업 탐색','내 얼굴 만들기','조사 내용','카드 완성'];
 let faceMode=state.faceMode==='avatar'?'avatar':'photo',avatarTab='hair',accessoryTab='glasses';
 state.avatar=normalizeAvatar(state.avatar);
-const costumeAtlases=[new Image(),new Image()],headAtlases={},accessoryAtlas=new Image(),bucketHat=new Image();
+const costumeAtlases=[new Image(),new Image()],headAtlases={},accessoryAtlas=new Image(),bucketHat=new Image(),maleHeadAtlas=new Image();
 const avatarCostumeMaps=[
  [[292,314,371],[300,308,356],[315,322,370],[260,321,372],[253,264,323],[307,273,332],[214,290,347],[314,294,350]],
  [[298,318,379],[300,319,372],[287,321,363],[368,319,388],[344,310,397],[298,290,355],[338,297,370],[315,305,369]]
 ];
 const headRegistration=[[266.3,301.1,124.4],[258.3,306.3,119.8],[269.8,301.1,119.3],[268.0,280.6,123.7],[257.6,281.3,120.4],[256.6,281.3,120.9]];
+const extraHeadRegistration=[[[262.8,311.1,138.8],[266.2,311.1,138.8],[261.3,311.1,138.9],[265.4,311.1,138.9]],[[262.7,306.2,139.2],[265.8,306.2,139.2],[260.3,306.7,138.9],[265.0,306.7,138.9]]];
+const avatarExpressions=['open-soft','closed-soft','open-wide','closed-wide'];
 const hatPlacement={1:{sprite:2,width:315,height:180,bottom:-174},2:{sprite:3,width:352,height:0,bottom:-170}};
-const clothingOptions=[['원래 색',null],['하늘색',200],['초록색',145],['보라색',272],['분홍색',340],['주황색',25]];
-function avatarArtReady(){return costumeAtlases.every(im=>im.complete&&im.naturalWidth)&&Object.keys(headAtlases).length===4&&Object.values(headAtlases).every(im=>im.complete&&im.naturalWidth)&&accessoryAtlas.complete&&accessoryAtlas.naturalWidth>0&&bucketHat.complete&&bucketHat.naturalWidth>0}
+const clothingOptions=[['원래 색',null],['하늘색',200,'#55add9'],['초록색',145,'#5bb27f'],['보라색',272,'#a47bc9'],['분홍색',340,'#db7c9c'],['주황색',25,'#d99768']];
+function avatarArtReady(){return costumeAtlases.every(im=>im.complete&&im.naturalWidth)&&Object.keys(headAtlases).length===4&&Object.values(headAtlases).every(im=>im.complete&&im.naturalWidth)&&accessoryAtlas.complete&&accessoryAtlas.naturalWidth>0&&bucketHat.complete&&bucketHat.naturalWidth>0&&maleHeadAtlas.complete&&maleHeadAtlas.naturalWidth>0}
 function refreshAvatarArt(){if(avatarArtReady()){if(state.step===1&&faceMode==='avatar')render();else draw()}}
 function loadAvatarArt(im,path){im.onload=refreshAvatarArt;im.onerror=()=>toast('꾸미기 그림을 불러오지 못했어요. 새로고침해 주세요.');im.src=path}
 costumeAtlases.forEach((im,i)=>loadAvatarArt(im,'assets/avatar-costumes-'+i+'.webp'));
 for(const expression of ['open-soft','closed-soft','open-wide','closed-wide']){const im=new Image();headAtlases[expression]=im;loadAvatarArt(im,'assets/avatar-v3/heads-'+expression+'.webp')}
 loadAvatarArt(accessoryAtlas,'assets/avatar-v3/accessories.webp');
 loadAvatarArt(bucketHat,'assets/avatar-v3/hat-bucket-v2.webp');
+loadAvatarArt(maleHeadAtlas,'assets/avatar-v3/heads-male-extra.webp');
 
 function persist(){state.faceMode=faceMode;let t={...state};delete t.step;try{localStorage.setItem('filmcareers-v1',JSON.stringify(t))}catch{}}
 function toast(s){$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3000)}
@@ -72,23 +75,23 @@ $('#closeInfo').onclick=()=>$('#infoDialog').close();function fitViewport(){docu
 
 
 function faceModeTabs(){return `<div class="faceModeTabs"><button data-face-mode="photo" class="${faceMode==='photo'?'primary':''}" aria-pressed="${faceMode==='photo'}">📷 사진 넣기</button><button data-face-mode="avatar" class="${faceMode==='avatar'?'primary':''}" aria-pressed="${faceMode==='avatar'}">😊 아바타 꾸미기</button></div>`}
-function avatarDefaults(){return {version:3,hair:0,eyes:0,mouth:0,glasses:0,hat:0,pin:0,clothes:0}}
-function normalizeAvatar(value){const a=avatarDefaults();if(value?.version===3)for(const key of ['hair','eyes','mouth','glasses','hat','pin','clothes'])a[key]=Math.max(0,Math.min(({hair:4,eyes:1,mouth:1,glasses:2,hat:2,pin:2,clothes:5})[key],Math.floor(+value[key]||0)));return a}
+function avatarDefaults(){return {version:3,hair:0,maleHair:0,eyes:0,mouth:0,glasses:0,hat:0,pin:0,clothes:0}}
+function normalizeAvatar(value){const a=avatarDefaults();if(value?.version===3)for(const key of ['hair','maleHair','eyes','mouth','glasses','hat','pin','clothes'])a[key]=Math.max(0,Math.min(({hair:4,maleHair:2,eyes:1,mouth:1,glasses:2,hat:2,pin:2,clothes:5})[key],Math.floor(+value[key]||0)));return a}
 function avatarGroups(){return [
- ['hair','머리',state.style===0?['기본 짧은 머리']:['단발','긴 머리','묶은 머리','양 갈래','앞머리 있는 머리']],
+ ['hair','머리',state.style===0?['기본 짧은 머리','가르마 머리','앞머리']:['단발','긴 머리','묶은 머리','양 갈래','앞머리 있는 머리']],
  ['eyes','눈',['뜬눈','웃는 눈']],['mouth','입',['살짝 웃기','활짝 웃기']],
  ['accessory','액세서리',[]],['clothes','옷 색깔',clothingOptions.map(o=>o[0])]
 ]}
 function accessoryOptions(key){return ({glasses:['없음','둥근 안경','네모 안경'],hat:['없음','야구 모자','벙거지 모자'],pin:['없음','분홍 머리핀','별 머리핀']})[key]}
 function renderAvatar(){
  const groups=avatarGroups(),selected=groups.find(v=>v[0]===avatarTab)||groups[0],isAccessory=selected[0]==='accessory';
- const [key,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
- const activeIndex=key==='hair'&&state.style===0?0:state.avatar[key];
- stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div>${key==='hair'&&state.style===0?'<p class="avatarContext">짧은 머리에 모자와 안경을 더해 보세요.</p>':''}<div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
+ const [groupKey,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
+ const key=groupKey==='hair'&&state.style===0?'maleHair':groupKey,activeIndex=state.avatar[key];
+ stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${key==='clothes'&&i?`<i class="clothChip" style="background:${clothingOptions[i][2]}" aria-hidden="true"></i>`:''}${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
  document.querySelectorAll('[data-accessory-tab]').forEach(b=>b.onclick=()=>{accessoryTab=b.dataset.accessoryTab;render()});
- document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{if(key!=='hair'||state.style===1)state.avatar[key]=i;persist();render()}});
- $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===0?0:Math.floor(Math.random()*5),eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),hat:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
+ document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');if(key==='hair'||key==='maleHair'){a.hat=0;a.pin=0}if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
+ $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===1?Math.floor(Math.random()*5):state.avatar.hair,maleHair:state.style===0?Math.floor(Math.random()*3):state.avatar.maleHair,eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),hat:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
  $('#resetAvatar').onclick=()=>{state.avatar=avatarDefaults();persist();render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);
 }
 var costumeCache,garmentMaskCache,accessorySpriteCache,headSpriteCache,foregroundCache;
@@ -111,10 +114,10 @@ function drawCostume(g,x,y,w,h,a=state.avatar,style=state.style||0,job=state.job
  g.restore();
 }
 function paintAvatar(g,nx,ny,a,scale=1,style=state.style||0){
- if(!avatarArtReady())return;const head=style===0?0:1+a.hair,expression=(a.eyes?'closed':'open')+'-'+(a.mouth?'wide':'soft');
+ if(!avatarArtReady())return;const head=style===0?[0,6,7][a.maleHair||0]:1+a.hair,expression=(a.eyes?'closed':'open')+'-'+(a.mouth?'wide':'soft');
  const sprite=headSprite(head,expression);
  g.save();g.translate(nx,ny);g.scale(scale,scale);
- const [cx,ey,span]=headRegistration[head],unit=104/span;
+ const [cx,ey,span]=head>=6?extraHeadRegistration[head-6][avatarExpressions.indexOf(expression)]:headRegistration[head],unit=104/span;
  g.save();
  if(a.hat){g.beginPath();g.moveTo(-260,-135);g.quadraticCurveTo(-180,-130,-154,-197);g.quadraticCurveTo(0,-245,154,-197);g.quadraticCurveTo(180,-130,260,-135);g.lineTo(260,100);g.lineTo(-260,100);g.closePath();g.clip()}
  g.drawImage(sprite,-cx*unit,-136-ey*unit,512*unit,512*unit);g.restore();
@@ -129,8 +132,8 @@ function paintAvatar(g,nx,ny,a,scale=1,style=state.style||0){
 // sheet fragments are discarded by alpha connectivity, without cutting hair.
 function headSprite(index,expression){
  if(!headSpriteCache)headSpriteCache=new Map();const key=index+':'+expression;if(headSpriteCache.has(key))return headSpriteCache.get(key);
- const im=headAtlases[expression],cw=im.naturalWidth/3,ch=im.naturalHeight/2,c=document.createElement('canvas');c.width=c.height=512;
- const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,(index%3)*cw,Math.floor(index/3)*ch,cw,ch,0,0,512,512);
+ const extra=index>=6,im=extra?maleHeadAtlas:headAtlases[expression],cw=im.naturalWidth/(extra?4:3),ch=im.naturalHeight/2,c=document.createElement('canvas');c.width=c.height=512;
+ const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,(extra?avatarExpressions.indexOf(expression):index%3)*cw,(extra?index-6:Math.floor(index/3))*ch,cw,ch,0,0,512,512);
  const image=g.getImageData(0,0,512,512),d=image.data,total=512*512,seen=new Uint8Array(total),queue=new Int32Array(total);let best=new Int32Array(0);
  for(let seed=0;seed<total;seed++){if(seen[seed]||d[seed*4+3]<30)continue;let front=0,end=1;queue[0]=seed;seen[seed]=1;
   while(front<end){const i=queue[front++],x=i%512,y=Math.floor(i/512);for(const n of [x?i-1:-1,x<511?i+1:-1,y?i-512:-1,y<511?i+512:-1,x&&y?i-513:-1,x<511&&y?i-511:-1,x&&y<511?i+511:-1,x<511&&y<511?i+513:-1])if(n>=0&&!seen[n]&&d[n*4+3]>=30){seen[n]=1;queue[end++]=n}}
@@ -173,19 +176,110 @@ function accessorySprite(index){
 function paintAccessory(g,index,x,y,width,align='center',angle=0,height=0){const s=accessorySprite(index),h=height||width*s.h/s.w;g.save();g.translate(x,y);g.rotate(angle);g.drawImage(s.image,s.x,s.y,s.w,s.h,-width/2,align==='bottom'?-h:-h/2,width,h);g.restore()}
 function rgbHSV(r,g,b){r/=255;g/=255;b/=255;const v=Math.max(r,g,b),min=Math.min(r,g,b),d=v-min;let h=0;if(d)h=v===r?60*((g-b)/d%6):v===g?60*((b-r)/d+2):60*((r-g)/d+4);return [(h+360)%360,v?d/v:0,v]}
 function hueRGB(h,s,v){const c=v*s,x=c*(1-Math.abs(h/60%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]}
+// Skin is protected at the registered neck and hands, rather than treating
+// every warm highlight on a red or yellow garment as skin.
+const garmentHandZones=[
+ [[[140,355,300,495],[410,475,540,590]],[[140,455,320,600],[450,275,600,460]],[[90,510,265,600],[290,465,535,600]],[[185,500,320,600],[465,345,580,485]],[[230,435,400,575],[355,345,485,490]],[[135,370,245,510]],[[145,485,290,600],[330,465,465,575]],[[130,335,240,500],[355,455,540,600]]],
+ [[[140,370,325,520],[390,475,535,600]],[[140,445,310,600],[305,465,470,600]],[[110,535,255,600],[265,490,535,600]],[[130,340,220,470],[335,480,470,600]],[[90,320,215,515],[130,385,290,530]],[[115,425,235,570],[350,485,520,590]],[[130,455,265,575],[370,485,535,600]],[[155,340,275,520],[305,470,485,600]]]
+];
+function inGarmentPolygon(x,y,points){let inside=false;for(let i=0,j=points.length-1;i<points.length;j=i++){const[a,b]=points[i],[c,d]=points[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)inside=!inside}return inside}
+function nearGarmentPolygon(x,y,p,margin=4){if(inGarmentPolygon(x,y,p))return true;for(let i=0,j=p.length-1;i<p.length;j=i++){const[a,b]=p[i],[c,d]=p[j],dx=c-a,dy=d-b,t=Math.max(0,Math.min(1,((x-a)*dx+(y-b)*dy)/(dx*dx+dy*dy||1)));if((x-a-t*dx)**2+(y-b-t*dy)**2<=margin*margin)return true}return false}
+const directorPropAreas=[
+ [[[281,388],[472,297],[485,326],[296,422]],[[289,409],[503,380],[522,542],[309,572]]],
+ [[[260,387],[438,302],[454,338],[278,427]],[[218,437],[458,422],[469,600],[223,600]]]
+];
+const lightingNeckSkin=[[[216,312],[298,312],[298,340],[308,350],[307,358],[300,368],[292,374],[266,380],[238,375],[224,368],[212,357],[207,347],[214,332]],[[312,287],[377,287],[379,319],[376,329],[367,344],[356,360],[350,372],[323,380],[299,373],[291,362],[296,346],[300,333],[313,321]]];
+const lightingHandSkin=[[[[270,495],[281,480],[295,471],[318,466],[342,473],[361,484],[370,494],[367,511],[352,523],[333,526],[312,540],[289,542],[274,533],[268,516]],[[390,369],[418,363],[444,371],[454,388],[458,408],[453,430],[440,448],[418,457],[400,451],[387,432],[386,412],[388,393]]],[[[114,347],[139,339],[159,345],[173,356],[174,372],[169,385],[168,398],[153,414],[143,430],[141,451],[130,473],[113,488],[99,484],[99,464],[105,440],[109,412],[112,391]],[[148,420],[166,412],[187,419],[207,431],[226,438],[244,448],[256,465],[255,486],[239,493],[217,480],[191,466],[173,457],[156,448],[147,437]]]];
+const cameraMaleSkin=[[[272,322],[356,322],[358,344],[349,360],[333,369],[311,374],[289,367],[275,354]],[[104,544],[120,541],[150,542],[167,530],[178,525],[197,528],[212,536],[237,539],[241,550],[239,565],[234,581],[215,594],[189,599],[157,593],[127,585],[111,571],[103,557]],[[314,490],[337,488],[355,498],[374,510],[399,515],[443,511],[469,510],[487,514],[499,526],[504,544],[503,558],[491,570],[471,576],[442,575],[404,573],[374,559],[350,552],[330,545],[318,538],[310,525],[311,510]]];
+const actorFemalePaper=[[247,374],[452,408],[385,600],[227,600],[230,511],[238,430]];
+const actorFemaleHands=[[[166,584],[174,549],[182,530],[194,515],[206,498],[224,486],[251,481],[270,484],[285,494],[287,509],[284,520],[288,530],[280,544],[268,556],[244,560],[223,569],[202,584],[177,600]],[[338,524],[347,507],[372,503],[397,508],[412,519],[424,535],[433,555],[444,580],[448,600],[397,600],[382,584],[372,568],[356,558],[344,545]]];
+const cameraPropAreas=[[[[20,377],[147,377],[145,298],[239,295],[244,348],[301,374],[344,388],[379,406],[382,495],[363,533],[280,570],[235,571],[204,552],[110,552],[22,534]]],[[[15,365],[170,338],[196,400],[50,424]],[[30,417],[246,405],[281,420],[357,442],[359,543],[330,577],[231,588],[205,574],[35,559]],[[206,366],[308,365],[319,396],[221,399]],[[405,466],[516,465],[533,495],[536,540],[441,545],[405,529]]]];
+const lightingMaleHead=[[338,207],[389,199],[389,164],[400,142],[490,136],[501,195],[512,203],[576,185],[598,190],[598,329],[523,331],[550,364],[519,381],[459,378],[425,355],[407,357],[384,348],[372,334],[340,331]];
+function garmentPropPixel(x,y,style,job,h,s,v){
+ if(job===0)return directorPropAreas[style].some(p=>inGarmentPolygon(x,y,p));
+ if(job===1&&style===1&&s<.4&&inGarmentPolygon(x,y,actorFemalePaper))return true;
+ if(job===2)return cameraPropAreas[style].some(p=>inGarmentPolygon(x,y,p))||style===1&&x>=360&&x<=405&&y>=414&&y<=479&&(s<.25||h<190||h>239);
+ if(job!==4)return false;
+ if(style===0?inGarmentPolygon(x,y,lightingMaleHead):x<286&&y<302)return true;
+ const pole=style===0?x>=399&&x<=427&&y>=344||x>=394&&x<=431&&y>=478&&y<=565:x>=142&&x<=174&&y>=298||x>=118&&x<=199&&y>=505&&y<=552;
+ const handle=style===0&&y>404&&Math.abs(x-(603-.51*y))<27;
+ return (pole||handle)&&(v<.47||s<.2);
+}
+function garmentSkinPixel(d,k,x,y,style,job,h,s){
+ if(job===1&&style===1&&h<17)return false;
+ if(h<8||h>38||s<.2||d[k]<145||d[k+1]<80||d[k+2]<45||d[k]-d[k+1]<28||d[k+1]-d[k+2]<16)return false;
+ const nx=avatarCostumeMaps[style][job][0];
+ if(style===0&&job===2)return cameraMaleSkin.some((p,i)=>nearGarmentPolygon(x,y,p,i?4:8));
+ if(job===4)return nearGarmentPolygon(x,y,lightingNeckSkin[style],2)||lightingHandSkin[style].some(p=>nearGarmentPolygon(x,y,p,6));
+ if(Math.abs(x-nx)<55&&y<379)return true;
+ if(job===1&&style===1)return actorFemaleHands.some(p=>nearGarmentPolygon(x,y,p));
+ return garmentHandZones[style][job].some(([l,t,r,b])=>x>=l&&x<=r&&y>=t&&y<=b);
+}
+const warmHandSeeds=[
+ [[],[[194,548],[543,370]],[[170,556],[445,540]],[],[[313,500],[415,415]],[],[],[]],
+ [[],[[235,535],[382,546]],[[169,583],[422,575]],[],[[144,373],[205,458]],[],[],[]]
+];
+function warmHandMask(image,style,job){
+ const seeds=warmHandSeeds[style][job];if(!seeds.length)return null;
+ const d=image.data,candidate=new Uint8Array(360000),mask=new Uint8Array(360000),queue=new Int32Array(360000);
+ for(let i=0;i<360000;i++){const k=i*4;if(d[k+3]<8||d[k]<140||d[k+1]<75||d[k+2]<40||d[k]-d[k+1]<25||d[k+1]-d[k+2]<15)continue;const[h,s]=rgbHSV(d[k],d[k+1],d[k+2]);if(h>=15&&h<=33&&s>.18&&s<.68){const x=i%600,y=Math.floor(i/600);if(style===0&&job===2&&!(x>=100&&x<=244&&y>=520||x>=300&&x<=507&&y>=482&&y<=577))continue;candidate[i]=1}}
+ // Follow the connected painted hand, including its shaded edge. Warm paint
+ // elsewhere on the costume is not selected merely because it looks peach.
+ for(const[sx,sy]of seeds){let seed=-1;for(let r=0;r<=12&&seed<0;r++)for(let dy=-r;dy<=r&&seed<0;dy++)for(let dx=-r;dx<=r;dx++){const x=sx+dx,y=sy+dy;if(x>=0&&x<600&&y>=0&&y<600&&candidate[y*600+x]){seed=y*600+x;break}}
+  if(seed<0||mask[seed])continue;let front=0,end=1;queue[0]=seed;mask[seed]=1;while(front<end){const i=queue[front++],x=i%600,y=Math.floor(i/600);for(const n of[x?i-1:-1,x<599?i+1:-1,y?i-600:-1,y<599?i+600:-1])if(n>=0&&candidate[n]&&!mask[n]){mask[n]=1;queue[end++]=n}}
+ }
+ return mask;
+}
 function cameraGarmentArea(x,y,style){
- // The blue overall straps sit above and beside the camera. Excluding the
- // entire upper torso also excluded these pieces of the clothing.
- if(style===0)return x>=370||y>=550;
- return x>=178&&x<=220&&y<413||x>=365&&x<=405&&y<470||y>=556;
+ if(style===0)return x>=370||y>=550&&x>=220;
+ return x>=177&&x<=223&&y<418||x>=359&&x<=407&&y<505||y>=552&&x>=211;
+}
+function cameraShirtArea(x,y,style){
+ if(style===0)return x>402&&y>345||x>262&&x<405&&y>320&&y<398||x>48&&x<238&&y>532;
+ if(y<320)return false;
+ if(y<406)return x>=239&&x<512&&!(x<314&&y>=359);
+ if(y<468)return x>=358;
+ if(y<552)return x>=522;
+ return x>=205;
 }
 function garmentMask(image,style,job){
  if(!garmentMaskCache)garmentMaskCache=new Map();const key=style+':'+job;if(garmentMaskCache.has(key))return garmentMaskCache.get(key);
- const d=image.data,total=600*600,candidates=new Uint8Array(total),seen=new Uint8Array(total),queue=new Int32Array(total),components=[];
- const center=[178,5,212,275,43,145,340,215][job],range=job===1?18:30;
- for(let i=0;i<total;i++){const k=i*4;if(d[k+3]<8||i<600*300)continue;const [h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),dist=Math.min(Math.abs(h-center),360-Math.abs(h-center));const skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55;const x=i%600,y=Math.floor(i/600),light=job===4&&(style===0?x>335&&y<375:x<285&&y<300),equipment=job===2&&!cameraGarmentArea(x,y,style);if(s>.08&&v>.10&&dist<=range&&!skin&&!light&&!equipment)candidates[i]=1}
- for(let seed=0;seed<total;seed++){if(!candidates[seed]||seen[seed])continue;let start=0,end=1;queue[0]=seed;seen[seed]=1;while(start<end){const i=queue[start++],x=i%600,y=Math.floor(i/600);for(const n of [x?i-1:-1,x<599?i+1:-1,y?i-600:-1,y<599?i+600:-1])if(n>=0&&candidates[n]&&!seen[n]){seen[n]=1;queue[end++]=n}}if(end>20)components.push(queue.slice(0,end))}
- components.sort((a,b)=>b.length-a.length);const max=components[0]?.length||0,keep=components.filter((c,i)=>job===5?i<3&&c.length>=Math.max(900,max*.12):job===2||job===6?c.length>=350:c.length>=20),mask=new Uint8Array(total);for(const c of keep)for(const i of c)mask[i]=1;
+ const d=image.data,total=600*600,mask=new Uint8Array(total),hands=warmHandMask(image,style,job),center=[178,5,212,275,43,145,350,225][job],range=[39,29,39,42,29,38,20,45][job];
+ for(let i=0;i<total;i++){
+  const k=i*4,x=i%600,y=Math.floor(i/600);if(d[k+3]<8||y<275)continue;
+  const [h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),dist=Math.min(Math.abs(h-center),360-Math.abs(h-center));
+  if(hands?.[i]||garmentSkinPixel(d,k,x,y,style,job,h,s))continue;
+  if(garmentPropPixel(x,y,style,job,h,s,v))continue;
+  if(job===1&&y<400&&h>12&&h<65&&s<.55)continue;
+  if(job===1&&(s<.28&&v>.6&&(style===0||y<395)||h>29&&h<65&&s>.55))continue;
+  if(job===6&&v<.4&&s<.38)continue;
+  if(s>.055&&v>.05&&dist<=range&&(job!==2||cameraGarmentArea(x,y,style)))mask[i]=1;
+  // Camera operators have two visible fabrics: a light shirt / a dark shirt
+  // under the blue overalls. Both follow the palette with a contrasting tone.
+  if(job===2&&!mask[i]&&cameraShirtArea(x,y,style)&&(style===0?v>.18&&(h>=8&&h<=85||s<.16):v>.02&&(h>=205&&h<=315||s<.16)))mask[i]=2;
+ }
+ // The set model, color cards and monitor share some clothing hues. Keep
+ // connected garment pieces and leave those separate professional props alone.
+ if(job===5||job===6){
+  const seen=new Uint8Array(total),queue=new Int32Array(total),components=[];
+  for(let seed=0;seed<total;seed++){if(!mask[seed]||seen[seed])continue;let front=0,end=1;queue[0]=seed;seen[seed]=1;
+   while(front<end){const i=queue[front++],x=i%600,y=Math.floor(i/600);for(const n of[x?i-1:-1,x<599?i+1:-1,y?i-600:-1,y<599?i+600:-1])if(n>=0&&mask[n]&&!seen[n]){seen[n]=1;queue[end++]=n}}
+   components.push(queue.slice(0,end));
+  }
+  components.sort((a,b)=>b.length-a.length);const largest=components[0]?.length||0;mask.fill(0);
+  for(const component of components)if(component.length>=Math.max(job===5?500:100,largest*(job===5?.10:.035)))for(const i of component)mask[i]=1;
+ }
  garmentMaskCache.set(key,mask);return mask;
 }
-function recolorGarment(g,style,job,colorIndex){const image=g.getImageData(0,0,600,600),d=image.data,mask=garmentMask(image,style,job),target=clothingOptions[colorIndex][1];for(let i=0;i<mask.length;i++)if(mask[i]){const k=i*4,[,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),rgb=hueRGB(target,s,v);d[k]=rgb[0];d[k+1]=rgb[1];d[k+2]=rgb[2]}g.putImageData(image,0,0)}
+function rgbHSL(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min,l=(max+min)/2;let h=0,s=0;if(delta){s=delta/(1-Math.abs(2*l-1));h=max===r?60*((g-b)/delta%6):max===g?60*((b-r)/delta+2):60*((r-g)/delta+4)}return [(h+360)%360,s,l]}
+function hslRGB(h,s,l){const v=l+s*Math.min(l,1-l);return hueRGB(h,v?2*(1-l/v):0,v)}
+function recolorGarment(g,style,job,colorIndex){
+ const image=g.getImageData(0,0,600,600),d=image.data,mask=garmentMask(image,style,job),hex=clothingOptions[colorIndex][2],rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),[h,s,l]=rgbHSL(...rgb),hist=[new Uint32Array(256),new Uint32Array(256),new Uint32Array(256)],totals=[0,0,0];
+ for(let i=0;i<mask.length;i++)if(mask[i]&&d[i*4+3]>100){const k=i*4,light=Math.round((Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/2);hist[mask[i]][light]++;totals[mask[i]]++}
+ const median=hist.map((bins,part)=>{let n=0;for(let i=0;i<256;i++){n+=bins[i];if(n>=totals[part]/2)return i/255}return .5});
+ for(let i=0;i<mask.length;i++)if(mask[i]){
+  const k=i*4,part=mask[i],sourceL=(Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/510,delta=sourceL-(job===2?(median[1]+median[2])/2:median[part]),baseL=l,newL=Math.max(.08,Math.min(.94,baseL+delta*(job===2?.65:.95))),newS=s*(1-.25*Math.max(0,Math.min(1,delta/.23))),color=hslRGB(h,newS,newL);
+  d[k]=color[0];d[k+1]=color[1];d[k+2]=color[2];
+ }
+ g.putImageData(image,0,0);
+}
