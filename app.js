@@ -75,14 +75,28 @@ $('#closeInfo').onclick=()=>$('#infoDialog').close();function fitViewport(){docu
 
 
 function faceModeTabs(){return `<div class="faceModeTabs"><button data-face-mode="photo" class="${faceMode==='photo'?'primary':''}" aria-pressed="${faceMode==='photo'}">📷 사진 넣기</button><button data-face-mode="avatar" class="${faceMode==='avatar'?'primary':''}" aria-pressed="${faceMode==='avatar'}">😊 아바타 꾸미기</button></div>`}
-function avatarDefaults(){return {version:3,hair:0,maleHair:0,eyes:0,mouth:0,glasses:0,hat:0,pin:0,clothes:0}}
-function normalizeAvatar(value){const a=avatarDefaults();if(value?.version===3)for(const key of ['hair','maleHair','eyes','mouth','glasses','hat','pin','clothes'])a[key]=Math.max(0,Math.min(({hair:4,maleHair:2,eyes:1,mouth:1,glasses:2,hat:2,pin:2,clothes:5})[key],Math.floor(+value[key]||0)));return a}
+function avatarDefaults(){return {version:3,hair:0,maleHair:0,eyes:0,mouth:0,glasses:0,hat:0,hatChosen:false,pin:0,clothes:0}}
+function normalizeAvatar(value){
+ const a=avatarDefaults();
+ if(value?.version===3){
+  for(const key of ['hair','maleHair','eyes','mouth','glasses','hat','pin','clothes'])a[key]=Math.max(0,Math.min(({hair:4,maleHair:2,eyes:1,mouth:1,glasses:2,hat:2,pin:2,clothes:5})[key],Math.floor(+value[key]||0)));
+  // Legacy saved/random hats are not a default outfit. Only hats explicitly
+  // chosen in the hat menu are restored; other avatar choices remain intact.
+  a.hatChosen=value.hatChosen===true;if(!a.hatChosen)a.hat=0;
+ }
+ return a;
+}
 function avatarGroups(){return [
  ['hair','머리',state.style===0?['기본 짧은 머리','가르마 머리','앞머리']:['단발','긴 머리','묶은 머리','양 갈래','앞머리 있는 머리']],
  ['eyes','눈',['뜬눈','웃는 눈']],['mouth','입',['살짝 웃기','활짝 웃기']],
  ['accessory','액세서리',[]],['clothes','옷 색깔',clothingOptions.map(o=>o[0])]
 ]}
 function accessoryOptions(key){return ({glasses:['없음','둥근 안경','네모 안경'],hat:['없음','야구 모자','벙거지 모자'],pin:['없음','분홍 머리핀','별 머리핀']})[key]}
+function avatarChoicePreview(key,value,avatar=state.avatar){
+ const preview={...avatar,[key]:value};
+ if(key!=='clothes')for(const accessory of ['hat','glasses','pin'])if(key!==accessory)preview[accessory]=0;
+ return preview;
+}
 function renderAvatar(){
  const groups=avatarGroups(),selected=groups.find(v=>v[0]===avatarTab)||groups[0],isAccessory=selected[0]==='accessory';
  const [groupKey,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
@@ -90,8 +104,8 @@ function renderAvatar(){
  stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${key==='clothes'&&i?`<i class="clothChip" style="background:${clothingOptions[i][2]}" aria-hidden="true"></i>`:''}${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
  document.querySelectorAll('[data-accessory-tab]').forEach(b=>b.onclick=()=>{accessoryTab=b.dataset.accessoryTab;render()});
- document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');if(key==='hair'||key==='maleHair'){a.hat=0;a.pin=0}if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
- $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===1?Math.floor(Math.random()*5):state.avatar.hair,maleHair:state.style===0?Math.floor(Math.random()*3):state.avatar.maleHair,eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),hat:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
+ document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a=avatarChoicePreview(key,i),g=b.querySelector('canvas').getContext('2d');if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{state.avatar[key]=i;if(key==='hat')state.avatar.hatChosen=true;persist();render()}});
+ $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===1?Math.floor(Math.random()*5):state.avatar.hair,maleHair:state.style===0?Math.floor(Math.random()*3):state.avatar.maleHair,eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
  $('#resetAvatar').onclick=()=>{state.avatar=avatarDefaults();persist();render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);
 }
 var costumeCache,garmentMaskCache,accessorySpriteCache,headSpriteCache,foregroundCache;
