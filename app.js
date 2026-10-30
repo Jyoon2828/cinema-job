@@ -49,17 +49,47 @@ function download(){card.toBlob(blob=>{if(!blob)return toast('이미지를 저�
 
 const faceMaps=[[[0.49, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.51, 0.4, 0.165, 0.175], [0.44, 0.36, 0.165, 0.175], [0.5, 0.36, 0.165, 0.175], [0.39, 0.38, 0.165, 0.175], [0.5, 0.37, 0.165, 0.175]], [[0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.49, 0.41, 0.165, 0.175], [0.6, 0.4, 0.165, 0.175], [0.57, 0.42, 0.165, 0.175], [0.48, 0.39, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175]]];
 function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}"><span class="variantart" style="background-image:url(assets/careers-${i}.png);background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span><span>${i===0?'남':'녀'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
-function researchPanel(compact=false){const r=research[state.job];return `<${compact?'details':'section'} class="research">${compact?'<summary>촬영장 이야기와 자료 다시 보기</summary>':'<h3>🎞 촬영장에서는 이렇게 일해요</h3>'}<span class="phase">${r.phase}</span><ol class="daylist">${r.day.map(s=>`<li>${s}</li>`).join('')}</ol><p class="team"><b>함께 일하는 사람</b><br>${r.team}</p><div class="mission"><b>작은 직업 체험</b><p>${r.mission}</p></div><h3>🔎 진짜 영화인의 이야기</h3><p class="watch"><b>이것을 찾아보세요</b><br>${r.watch}</p><div class="resourcecards"><a href="${r.url}" target="_blank" rel="noopener noreferrer"><small>${r.provider}</small><strong>${r.title} ↗</strong><span>${r.note}</span></a></div><p class="resourceNote">자료 확인: 2026.10.30 · 자료는 새 창에서 열려요.</p></${compact?'details':'section'}>`}
+function researchPanel(compact=false){const r=research[state.job];return `<${compact?'details':'section'} class="research">${compact?'<summary>촬영장 이야기와 자료 다시 보기</summary>':'<h3>🎞 촬영장에서는 이렇게 일해요</h3>'}<span class="phase">${r.phase}</span><ol class="daylist">${r.day.map(s=>`<li>${s}</li>`).join('')}</ol><p class="team"><b>함께 일하는 사람</b><br>${r.team}</p><div class="mission"><b>작은 직업 체험</b><p>${r.mission}</p></div><h3>🔎 진짜 영화인의 이야기</h3><p class="watch"><b>이것을 찾아보세요</b><br>${r.watch}</p><div class="resourcecards">${(r.resources||[]).map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer"><small>${l.provider}</small><strong>${l.title} ↗</strong><span>${l.note}</span></a>`).join('')}<a href="${r.url}" target="_blank" rel="noopener noreferrer"><small>${r.provider}</small><strong>${r.title} ↗</strong><span>${r.note}</span></a></div><p class="resourceNote">자료 확인: 2026.10.30 · 자료는 새 창에서 열려요.</p></${compact?'details':'section'}>`}
 
 $('#closeInfo').onclick=()=>$('#infoDialog').close();function fitViewport(){document.documentElement.style.setProperty('--app-h',(window.visualViewport?.height||innerHeight)+'px')}window.visualViewport?.addEventListener('resize',fitViewport);window.addEventListener('resize',fitViewport);fitViewport();document.fonts.ready.then(()=>draw());render();
 
 
 function faceModeTabs(){return `<div class="faceModeTabs"><button data-face-mode="photo" class="${faceMode==='photo'?'primary':''}" aria-pressed="${faceMode==='photo'}">📷 사진 넣기</button><button data-face-mode="draw" class="${faceMode==='draw'?'primary':''}" aria-pressed="${faceMode==='draw'}">✏️ 직접 그리기</button></div>`}
+// Process a costume once; reuse it for every pen stroke.
+var costumeCache;
+function costumeLayer(){
+ if(!costumeCache)costumeCache=new Map();const key=(state.style||0)+':'+state.job;
+ if(costumeCache.has(key))return costumeCache.get(key);
+ const c=document.createElement('canvas');c.width=c.height=600;const q=c.getContext('2d',{willReadFrequently:true});
+ const cw=atlas.naturalWidth/4,ch=atlas.naturalHeight/2;
+ q.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch,cw,ch,0,0,600,600);
+ // Remove only the edge-connected pale background, retaining enclosed light clothes.
+ const img=q.getImageData(0,0,600,600),d=img.data,seen=new Uint8Array(360000),queue=new Int32Array(360000);let head=0,tail=0;
+ const add=i=>{if(i<0||i>=360000||seen[i])return;seen[i]=1;const k=i*4;if(d[k]>224&&d[k+1]>215&&d[k+2]>175)queue[tail++]=i};
+ for(let i=0;i<600;i++){add(i);add(359400+i);add(i*600);add(i*600+599)}
+ while(head<tail){const i=queue[head++];d[i*4+3]=0;const x=i%600;if(x)add(i-1);if(x<599)add(i+1);add(i-600);add(i+600)}q.putImageData(img,0,0);
+ const result=document.createElement('canvas');result.width=result.height=600;const g=result.getContext('2d');
+ const f=faceMaps[state.style||0][state.job],nx=f[0]*600,ny=(f[1]+f[3]-.008)*600;
+ // Follow shoulders and collar with curves instead of a horizontal crop.
+ g.save();g.beginPath();g.moveTo(0,ny+110);g.bezierCurveTo(nx-230,ny+95,nx-185,ny+12,nx-72,ny-5);g.quadraticCurveTo(nx-45,ny-13,nx-29,ny-7);g.quadraticCurveTo(nx,ny+13,nx+30,ny-7);g.quadraticCurveTo(nx+48,ny-13,nx+76,ny-4);g.bezierCurveTo(nx+180,ny+7,nx+220,ny+90,600,ny+115);g.lineTo(600,600);g.lineTo(0,600);g.closePath();
+ // Tools may extend above the shoulders, so preserve those areas separately.
+ const props=[
+ [[[.35,.67],[.77,.48],[.82,.53],[.46,.73]]],
+ (state.style===0?[[[.81,.47],[1,.47],[1,1],[.81,1]]]:[]),
+ [[[.06,.49],[.46,.49],[.58,.62],[.62,1],[.04,1]]],
+ (state.style===1?[[[0,0],[.30,0],[.36,.70],[.13,.76]]]:[[[.81,0],[1,0],[1,1],[.76,1],[.79,.55]]]),
+ (state.style===1?[[[0,0],[.43,0],[.43,.43],[.31,.57],[.30,1],[0,1]]]:[[[.71,.16],[1,.16],[1,1],[.71,1]]]),
+ [[[0,.44],[.31,.40],[.36,.54],[.26,.79],[0,.81]]],
+ (state.style===1?[[[0,.30],[.24,.31],[.24,1],[0,1]]]:[[[.67,.25],[1,.25],[1,1],[.67,1]]]),
+ [[[.19,.48],[.31,.48],[.40,.70],[.29,.78]]]
+ ][state.job];
+ for(const polygon of props){g.moveTo(polygon[0][0]*600,polygon[0][1]*600);for(const [x,y]of polygon.slice(1))g.lineTo(x*600,y*600);g.closePath()}
+ g.clip();g.drawImage(c,0,0);g.restore();costumeCache.set(key,result);return result;
+}
 function drawCostume(g,x,y,w,h){
  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle='#fffaf0';g.fillRect(x,y,w,h);
  const fit=Math.min(w/600,h/600),ox=x+(w-600*fit)/2,oy=y+(h-600*fit)/2;
- g.translate(ox,oy);g.scale(fit,fit);
- if(ready){const cw=atlas.naturalWidth/4,ch=atlas.naturalHeight/2;g.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch+ch*.60,cw,ch*.40,0,360,600,240)}
+ g.translate(ox,oy);g.scale(fit,fit);if(ready)g.drawImage(costumeLayer(),0,0);
  g.drawImage(ink,0,0);g.restore();
 }
 function renderDrawing(){
