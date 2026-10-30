@@ -11,19 +11,21 @@ let state={job:0,step:0,name:'',work:'',ability:'',wish:'',theme:0,style:0,zoom:
 const colors=['#9274ae','#6b98ac','#ce8b9c','#be9a54'];const careerSources=['assets/careers-male-v3.webp','assets/careers-1.png'];const photo=new Image(),atlases=[new Image(),new Image()];let atlas=atlases[0];let hasPhoto=false,ready=false,stream=null;const $=s=>document.querySelector(s),stage=$('#stage'),card=$('#card'),ctx=card.getContext('2d');atlases.forEach((a,i)=>{a.src=careerSources[i];a.onload=()=>{if(i===state.style){atlas=a;ready=true}draw()};a.onerror=()=>toast('그림을 불러오지 못했어요. 새로고침해 주세요.')});state.style=state.style===1?1:0;atlas=atlases[state.style];const steps=['직업 탐색','내 얼굴 만들기','조사 내용','카드 완성'];
 let faceMode=state.faceMode==='avatar'?'avatar':'photo',avatarTab='hair',accessoryTab='glasses';
 state.avatar=normalizeAvatar(state.avatar);
-const costumeAtlases=[new Image(),new Image()],headAtlases={},accessoryAtlas=new Image();
+const costumeAtlases=[new Image(),new Image()],headAtlases={},accessoryAtlas=new Image(),bucketHat=new Image();
 const avatarCostumeMaps=[
  [[292,314,371],[300,308,356],[315,322,370],[260,321,372],[253,264,323],[307,273,332],[214,290,347],[314,294,350]],
  [[298,318,379],[300,319,372],[287,321,363],[368,319,388],[344,310,397],[298,290,355],[338,297,370],[315,305,369]]
 ];
 const headRegistration=[[266.3,301.1,124.4],[258.3,306.3,119.8],[269.8,301.1,119.3],[268.0,280.6,123.7],[257.6,281.3,120.4],[256.6,281.3,120.9]];
+const hatPlacement={1:{sprite:2,width:315,height:180,bottom:-174},2:{sprite:3,width:352,height:0,bottom:-170}};
 const clothingOptions=[['원래 색',null],['하늘색',200],['초록색',145],['보라색',272],['분홍색',340],['주황색',25]];
-function avatarArtReady(){return costumeAtlases.every(im=>im.complete&&im.naturalWidth)&&Object.keys(headAtlases).length===4&&Object.values(headAtlases).every(im=>im.complete&&im.naturalWidth)&&accessoryAtlas.complete&&accessoryAtlas.naturalWidth>0}
+function avatarArtReady(){return costumeAtlases.every(im=>im.complete&&im.naturalWidth)&&Object.keys(headAtlases).length===4&&Object.values(headAtlases).every(im=>im.complete&&im.naturalWidth)&&accessoryAtlas.complete&&accessoryAtlas.naturalWidth>0&&bucketHat.complete&&bucketHat.naturalWidth>0}
 function refreshAvatarArt(){if(avatarArtReady()){if(state.step===1&&faceMode==='avatar')render();else draw()}}
 function loadAvatarArt(im,path){im.onload=refreshAvatarArt;im.onerror=()=>toast('꾸미기 그림을 불러오지 못했어요. 새로고침해 주세요.');im.src=path}
 costumeAtlases.forEach((im,i)=>loadAvatarArt(im,'assets/avatar-costumes-'+i+'.webp'));
 for(const expression of ['open-soft','closed-soft','open-wide','closed-wide']){const im=new Image();headAtlases[expression]=im;loadAvatarArt(im,'assets/avatar-v3/heads-'+expression+'.webp')}
 loadAvatarArt(accessoryAtlas,'assets/avatar-v3/accessories.webp');
+loadAvatarArt(bucketHat,'assets/avatar-v3/hat-bucket-v2.webp');
 
 function persist(){state.faceMode=faceMode;let t={...state};delete t.step;try{localStorage.setItem('filmcareers-v1',JSON.stringify(t))}catch{}}
 function toast(s){$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3000)}
@@ -77,7 +79,7 @@ function avatarGroups(){return [
  ['eyes','눈',['뜬눈','웃는 눈']],['mouth','입',['살짝 웃기','활짝 웃기']],
  ['accessory','액세서리',[]],['clothes','옷 색깔',clothingOptions.map(o=>o[0])]
 ]}
-function accessoryOptions(key){return ({glasses:['없음','둥근 안경','네모 안경'],hat:['없음','파란 모자','베이지 모자'],pin:['없음','분홍 머리핀','별 머리핀']})[key]}
+function accessoryOptions(key){return ({glasses:['없음','둥근 안경','네모 안경'],hat:['없음','야구 모자','벙거지 모자'],pin:['없음','분홍 머리핀','별 머리핀']})[key]}
 function renderAvatar(){
  const groups=avatarGroups(),selected=groups.find(v=>v[0]===avatarTab)||groups[0],isAccessory=selected[0]==='accessory';
  const [key,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
@@ -105,7 +107,7 @@ function drawCostume(g,x,y,w,h,a=state.avatar,style=state.style||0,job=state.job
  const fit=Math.min(w/600,h/600);g.translate(x+(w-600*fit)/2,y+(h-600*fit)/2);g.scale(fit,fit);
  const nx=avatarCostumeMaps[style][job][0],costume=costumeLayer(a,style,job);
  if(costume)g.drawImage(costume,0,0);paintAvatar(g,nx,374,a,1,style);
- const tools=foregroundTools(style,job);if(tools)g.drawImage(tools,0,0);
+ const tools=foregroundTools(style,job,a);if(tools)g.drawImage(tools,0,0);
  g.restore();
 }
 function paintAvatar(g,nx,ny,a,scale=1,style=state.style||0){
@@ -116,7 +118,9 @@ function paintAvatar(g,nx,ny,a,scale=1,style=state.style||0){
  g.save();
  if(a.hat){g.beginPath();g.moveTo(-260,-135);g.quadraticCurveTo(-180,-130,-154,-197);g.quadraticCurveTo(0,-245,154,-197);g.quadraticCurveTo(180,-130,260,-135);g.lineTo(260,100);g.lineTo(-260,100);g.closePath();g.clip()}
  g.drawImage(sprite,-cx*unit,-136-ey*unit,512*unit,512*unit);g.restore();
- if(a.hat)paintAccessory(g,a.hat===1?2:3,0,-174,315,'bottom',0,180);
+ // Head coordinates are registered to the eyes before costume/job placement.
+ // Each hat has its own fit; the bucket keeps its natural painted aspect ratio.
+ if(a.hat){const hat=hatPlacement[a.hat];paintAccessory(g,hat.sprite,0,hat.bottom,hat.width,'bottom',0,hat.height)}
  if(a.pin)paintAccessory(g,a.pin===1?4:5,102,a.hat?-169:-220,43,'center',.18);
  if(a.glasses)paintAccessory(g,a.glasses-1,0,-136,200);
  g.restore();
@@ -136,24 +140,32 @@ function headSprite(index,expression){
  for(let i=0;i<total;i++)if(!keep[i])d[i*4+3]=0;g.putImageData(image,0,0);headSpriteCache.set(key,c);return c;
 }
 // Held equipment and hands render in front of hair; garment colors and
-// stock necks do not. Screens remain behind the head.
-function foregroundTools(style,job){
- if(!foregroundCache)foregroundCache=new Map();const key=style+':'+job;if(foregroundCache.has(key))return foregroundCache.get(key);
+// stock necks do not. Screens and the lighting fixture stay behind the head.
+function foregroundTools(style,job,a=state.avatar){
+ if(!foregroundCache)foregroundCache=new Map();const key=style+':'+job+':'+a.clothes;if(foregroundCache.has(key))return foregroundCache.get(key);
  const base=costumeLayer(avatarDefaults(),style,job);if(!base)return null;
  const c=document.createElement('canvas');c.width=c.height=600;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(base,0,0);
  const image=g.getImageData(0,0,600,600),d=image.data,nx=avatarCostumeMaps[style][job][0],hue=[178,5,212,275,43,145,340,215][job];
  for(let i=0;i<360000;i++){const x=i%600,y=Math.floor(i/600),k=i*4;
+  // The whole lamp head belongs behind the avatar. Hue-based foreground
+  // extraction split its yellow bulb from its dark frame and cut into hats.
+  if(job===4&&y<(style===0?375:300)){d[k+3]=0;continue}
   const region=[y>285&&x>190&&x<580,y>340&&x>140&&x<590,y>285&&x<535&&y<580,(style===0?x>450:x<220)||y>405&&x>200&&x<550,style===0?x>355||y>455&&x>230:x<250||y>455&&x<300,x<270&&y>290&&y<500||y>440,y>500,y>390||x<260&&y>285][job];
   if(!region||!d[k+3]){d[k+3]=0;continue}
   const[h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),diff=Math.min(Math.abs(h-hue),360-Math.abs(h-hue)),skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55,neck=(skin||h>=8&&h<=40&&s>.25)&&Math.abs(x-nx)<70&&y<374;
   if(neck||!(s<.26||diff>35||skin))d[k+3]=0;
  }
- g.putImageData(image,0,0);foregroundCache.set(key,c);return c;
+ // Use the original pixels only to find the foreground. Its visible colors
+ // always come from the selected costume, so highlights cannot restore the
+ // original garment color over the recolored layer.
+ const colored=costumeLayer(a,style,job).getContext('2d').getImageData(0,0,600,600).data;
+ for(let k=0;k<d.length;k+=4){d[k]=colored[k];d[k+1]=colored[k+1];d[k+2]=colored[k+2]}
+ g.putImageData(image,0,0);foregroundCache.set(key,c);if(foregroundCache.size>24)foregroundCache.delete(foregroundCache.keys().next().value);return c;
 }
 function accessorySprite(index){
  if(!accessorySpriteCache)accessorySpriteCache=new Map();if(accessorySpriteCache.has(index))return accessorySpriteCache.get(index);
- const rects=[[0,0,512,512],[512,0,512,512],[1024,0,512,512],[0,512,570,512],[570,512,454,512],[1024,512,512,512]],[sx,sy,sw,sh]=rects[index],c=document.createElement('canvas');c.width=sw;c.height=sh;
- const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(accessoryAtlas,sx,sy,sw,sh,0,0,c.width,c.height);
+ const source=index===3?bucketHat:accessoryAtlas,rects=[[0,0,512,512],[512,0,512,512],[1024,0,512,512],[0,0,bucketHat.naturalWidth,bucketHat.naturalHeight],[570,512,454,512],[1024,512,512,512]],[sx,sy,sw,sh]=rects[index],c=document.createElement('canvas');c.width=sw;c.height=sh;
+ const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(source,sx,sy,sw,sh,0,0,c.width,c.height);
  const d=g.getImageData(0,0,c.width,c.height).data;let l=c.width,t=c.height,r=0,b=0;
  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(d[(y*c.width+x)*4+3]>40){l=Math.min(l,x);r=Math.max(r,x+1);t=Math.min(t,y);b=Math.max(b,y+1)}
  const part={image:c,x:l,y:t,w:Math.max(1,r-l),h:Math.max(1,b-t)};accessorySpriteCache.set(index,part);return part;
@@ -161,11 +173,17 @@ function accessorySprite(index){
 function paintAccessory(g,index,x,y,width,align='center',angle=0,height=0){const s=accessorySprite(index),h=height||width*s.h/s.w;g.save();g.translate(x,y);g.rotate(angle);g.drawImage(s.image,s.x,s.y,s.w,s.h,-width/2,align==='bottom'?-h:-h/2,width,h);g.restore()}
 function rgbHSV(r,g,b){r/=255;g/=255;b/=255;const v=Math.max(r,g,b),min=Math.min(r,g,b),d=v-min;let h=0;if(d)h=v===r?60*((g-b)/d%6):v===g?60*((b-r)/d+2):60*((r-g)/d+4);return [(h+360)%360,v?d/v:0,v]}
 function hueRGB(h,s,v){const c=v*s,x=c*(1-Math.abs(h/60%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]}
+function cameraGarmentArea(x,y,style){
+ // The blue overall straps sit above and beside the camera. Excluding the
+ // entire upper torso also excluded these pieces of the clothing.
+ if(style===0)return x>=370||y>=550;
+ return x>=178&&x<=220&&y<413||x>=365&&x<=405&&y<470||y>=556;
+}
 function garmentMask(image,style,job){
  if(!garmentMaskCache)garmentMaskCache=new Map();const key=style+':'+job;if(garmentMaskCache.has(key))return garmentMaskCache.get(key);
  const d=image.data,total=600*600,candidates=new Uint8Array(total),seen=new Uint8Array(total),queue=new Int32Array(total),components=[];
  const center=[178,5,212,275,43,145,340,215][job],range=job===1?18:30;
- for(let i=0;i<total;i++){const k=i*4;if(d[k+3]<50||i<600*310)continue;const [h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),dist=Math.min(Math.abs(h-center),360-Math.abs(h-center));const skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55;const x=i%600,y=Math.floor(i/600),light=job===4&&y<450&&(style===0?x>355:x<250),equipment=job===2&&x<430&&y<530;if(s>.2&&v>.10&&dist<=range&&!skin&&!light&&!equipment)candidates[i]=1}
+ for(let i=0;i<total;i++){const k=i*4;if(d[k+3]<8||i<600*300)continue;const [h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),dist=Math.min(Math.abs(h-center),360-Math.abs(h-center));const skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55;const x=i%600,y=Math.floor(i/600),light=job===4&&(style===0?x>335&&y<375:x<285&&y<300),equipment=job===2&&!cameraGarmentArea(x,y,style);if(s>.08&&v>.10&&dist<=range&&!skin&&!light&&!equipment)candidates[i]=1}
  for(let seed=0;seed<total;seed++){if(!candidates[seed]||seen[seed])continue;let start=0,end=1;queue[0]=seed;seen[seed]=1;while(start<end){const i=queue[start++],x=i%600,y=Math.floor(i/600);for(const n of [x?i-1:-1,x<599?i+1:-1,y?i-600:-1,y<599?i+600:-1])if(n>=0&&candidates[n]&&!seen[n]){seen[n]=1;queue[end++]=n}}if(end>20)components.push(queue.slice(0,end))}
  components.sort((a,b)=>b.length-a.length);const max=components[0]?.length||0,keep=components.filter((c,i)=>job===5?i<3&&c.length>=Math.max(900,max*.12):job===2||job===6?c.length>=350:c.length>=20),mask=new Uint8Array(total);for(const c of keep)for(const i of c)mask[i]=1;
  garmentMaskCache.set(key,mask);return mask;

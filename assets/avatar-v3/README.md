@@ -20,7 +20,7 @@ Each head sheet is a 1536×1024 transparent 3-column × 2-row atlas:
 
 The base sheet was edited three times with only the corresponding eye/mouth expression changed. Heads stay registered as full painted sprites. `app.js` uses measured eye centers and spans to keep all hairstyles aligned. Largest-alpha-component cleanup discards adjacent sheet fragments without cutting the head silhouette.
 
-`accessories.webp` contains front-only round and rectangular eyeglass frames, a blue cap, a beige bucket hat, a pink clip and a star clip. The glasses have transparent lenses, no temples and no arms. Caps cover the original hair crown, and each accessory type is independently selectable. The bucket-hat/pink-clip source rectangles follow the actual gutters rather than cutting an object at the nominal cell edge.
+`accessories.webp` supplies front-only eyeglass frames, the blue cap and hairpins. The glasses have transparent lenses, no temples and no arms. `hat-bucket-v2.webp` supplies a separately fitted beige bucket hat, without a visible inner cavity. The bucket keeps its natural aspect ratio and has its own width and vertical registration; the cap retains its own fit. Hair crowns are occluded beneath both hats. Hats follow the registered head center in all eight costumes. The lighting fixture renders behind the head as a whole, preserving a consistent overlap with hair and hats.
 
 The original male job atlas was separately edited to use the same eye design and saved as `../careers-male-v3.webp`. The female atlas is retained. The existing transparent costume atlases are retained; primary garment hue changes preserve image alpha, paint shading, skin and professional equipment.
 
@@ -30,3 +30,5 @@ The original male job atlas was separately edited to use the same eye design and
 - Expression edits: change only eyes to smiling arcs and/or mouth to a small open happy smile; preserve hairstyle, face, pose, scale, layout and texture.
 - Accessories: six painted front-view dress-up accessories, glasses consisting of front rims and bridge only, no temples or tinted lenses, same warm gouache style, transparent background.
 - Male job atlas: replace only the eight male characters’ eyes with the female reference eye style; retain all costumes, props, poses, layout and background.
+
+- Bucket fit revision: built-in image generation, edit target/style references `accessories.webp` and `heads-open-soft.webp`; one isolated cream/beige bucket hat worn on an invisible child, straight front view, short crown, gently sloping fabric brim, no visible oval opening/inside cavity/underside, no head or hair, warm gouache texture, transparent background. Output converted losslessly to `hat-bucket-v2.webp`.

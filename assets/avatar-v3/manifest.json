@@ -74,9 +74,21 @@
     "temples": false
   },
   "hat": {
-    "width": 315,
-    "height": 180,
-    "bottom_from_neck": -174
+    "cap": {
+      "asset": "accessories.webp",
+      "sprite": 2,
+      "width": 315,
+      "height": 180,
+      "bottom_from_neck": -174
+    },
+    "bucket": {
+      "asset": "hat-bucket-v2.webp",
+      "sprite": 3,
+      "width": 352,
+      "height": "natural_aspect_ratio",
+      "bottom_from_neck": -170
+    },
+    "registration": "relative to the registered head center for all 8 costumes"
   },
   "accessory_source_rectangles": [
     [
@@ -99,9 +111,9 @@
     ],
     [
       0,
-      512,
-      570,
-      512
+      0,
+      1683,
+      935
     ],
     [
       570,
@@ -123,5 +135,13 @@
     272,
     340,
     25
+  ],
+  "accessory_sources": [
+    "accessories.webp",
+    "accessories.webp",
+    "accessories.webp",
+    "hat-bucket-v2.webp",
+    "accessories.webp",
+    "accessories.webp"
   ]
 }
