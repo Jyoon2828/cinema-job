@@ -53,11 +53,11 @@ const research=[
     ],
     "team": "동시녹음팀·폴리아티스트·음악팀 등 여러 소리 전문가가 협력해요.",
     "mission": "종이를 구기거나 손으로 책상을 두드려 장면에 어울리는 소리를 만들어 보세요.",
-    "watch": "화면 속 움직임과 소리를 어떻게 맞추는지 찾아보세요.",
-    "url": "https://www.korea.kr/news/policyNewsView.do?newsId=148711726",
-    "title": "생활 속 물건으로 영화 소리를 만드는 사람",
-    "provider": "대한민국 정책브리핑 · 폴리아티스트",
-    "note": "음향 분야의 한 직업인 폴리아티스트 소개예요. 오래된 글이므로 임금 정보 대신 작업 방법을 살펴봐요."
+    "watch": "소리를 녹음하는 일과 음향 장비를 다루는 일, 필요한 능력을 찾아보세요.",
+    "url": "https://www.career.go.kr/cnet/app/base/job/junior/juniorJobView59.m?jobTab=%EC%A3%BC%EB%8B%88%EC%96%B4%EC%A7%81%EC%97%85%EC%A0%95%EB%B3%B4",
+    "title": "영화의 소리를 담당하는 사람 — 음향 및 녹음기사",
+    "provider": "커리어넷 · 주니어 직업정보",
+    "note": "영화·방송의 소리를 녹음하고 음향 장비를 다루는 일과 필요한 능력을 알아봐요."
   },
   {
     "phase": "빛 설계와 촬영",
