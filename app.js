@@ -70,7 +70,7 @@ function costumeLayer(){
  q.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch,cw,ch,0,0,600,600);
  // Remove only the edge-connected pale background, retaining enclosed light clothes.
  const img=q.getImageData(0,0,600,600),d=img.data,seen=new Uint8Array(360000),queue=new Int32Array(360000);let head=0,tail=0;
- const add=i=>{if(i<0||i>=360000||seen[i])return;seen[i]=1;const k=i*4;if(d[k]>224&&d[k+1]>215&&d[k+2]>175)queue[tail++]=i};
+ const add=i=>{if(i<0||i>=360000||seen[i])return;seen[i]=1;const k=i*4;if(d[k]>224&&d[k+1]>215&&d[k+2]>175&&d[k]-d[k+2]>12&&d[k]-d[k+2]<48&&d[k+1]-d[k+2]>8&&d[k+1]-d[k+2]<35)queue[tail++]=i};
  for(let i=0;i<600;i++){add(i);add(359400+i);add(i*600);add(i*600+599)}
  while(head<tail){const i=queue[head++];d[i*4+3]=0;const x=i%600;if(x)add(i-1);if(x<599)add(i+1);add(i-600);add(i+600)}q.putImageData(img,0,0);
  const result=document.createElement('canvas');result.width=result.height=600;const g=result.getContext('2d');
@@ -94,7 +94,7 @@ function costumeLayer(){
 function drawCostume(g,x,y,w,h){
  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle='#fffaf0';g.fillRect(x,y,w,h);
  const fit=Math.min(w/600,h/600),ox=x+(w-600*fit)/2,oy=y+(h-600*fit)/2;
- g.translate(ox,oy);g.scale(fit,fit);const f=faceMaps[state.style||0][state.job],nx=f[0]*600,ny=(f[1]+f[3]-.008)*600;paintAvatar(g,nx,ny,state.avatar);if(ready)g.drawImage(costumeLayer(),0,0);g.restore();
+ g.translate(ox,oy);g.scale(fit,fit);const f=faceMaps[state.style||0][state.job],nx=f[0]*600,ny=(f[1]+f[3]-.008)*600;const scale=[[1.02,1.02,1.02,.94,.98,.98,.98,1],[.94,.94,.86,.86,.82,.93,.90,.93]][state.style||0][state.job];g.save();g.translate(nx,ny);g.scale(scale,scale);paintAvatar(g,0,0,state.avatar);g.restore();if(ready)g.drawImage(costumeLayer(),0,0);g.restore();
 }
 function avatarDefaults(){return {face:0,skin:1,hair:0,hairColor:0,eyes:0,brows:0,nose:0,mouth:0,accessory:0}}
 function avatarGroups(){return [
@@ -111,26 +111,57 @@ function renderAvatar(){
  const groups=avatarGroups(),item=groups.find(v=>v[0]===avatarTab)||groups[0],[key,label,options]=item;
  stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸밈 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="선택한 얼굴과 직업 의상이 합쳐진 아바타"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div><h3>${label} 고르기</h3><div class="avatarChoices">${options.map((o,i)=>`<button class="avatarChoice ${state.avatar[key]===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${state.avatar[key]===i}"><canvas width="104" height="104" aria-hidden="true"></canvas><span>${key==='skin'?'피부색 '+(i+1):key==='hairColor'?'머리색 '+(i+1):o}${state.avatar[key]===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
- document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');g.scale(.43,.43);paintAvatar(g,121,220,a);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
+ document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');g.scale(.225,.225);paintAvatar(g,231,365,a);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
  $('#randomAvatar').onclick=()=>{for(const [k,,opts]of groups)state.avatar[k]=Math.floor(Math.random()*opts.length);persist();render()};
  $('#resetAvatar').onclick=()=>{state.avatar=avatarDefaults();persist();render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);
 }
 // Layered canvas artwork remains sharp in both the editor and exported card.
+// All layers use the same face landmarks: chin=-18, eyes=-118, nose=-77, mouth=-48.
+// Hair behind the face cannot squeeze the face into a hairstyle's smaller transparent opening.
 function paintAvatar(g,nx,ny,a){
  if(!avatarArtReady())return;
- const sprite=(name,x,y,width,height,filter='none')=>{const im=avatarArt[name];if(!im?.naturalWidth)return;const h=height||width*im.naturalHeight/im.naturalWidth;g.save();g.filter=filter;g.drawImage(im,x-width/2,y-h/2,width,h);g.restore()};
  const skinFilters=['brightness(1.10) saturate(.85)','none','brightness(.90) saturate(1.08)','brightness(.77) saturate(1.1)','brightness(.64) saturate(1.1)','brightness(.52) saturate(1.08)'];
  const hairFilters=['brightness(.67)','brightness(.86)','none','brightness(1.28) saturate(.85)','hue-rotate(285deg) brightness(.78)','hue-rotate(325deg) saturate(.65)'];
- g.save();
- const f=avatarArt['face-'+a.face],fh=230*f.naturalHeight/f.naturalWidth;
- sprite('face-'+a.face,nx,ny-199+fh/2,230,fh,skinFilters[a.skin]);
- sprite('brows-'+a.brows,nx,ny-128,135,0,hairFilters[a.hairColor]);
- sprite('eyes-'+a.eyes,nx,ny-88,133,0);
- sprite('nose-'+a.nose,nx,ny-53,22,24,skinFilters[a.skin]);
- sprite('mouth-'+a.mouth,nx,ny-22,a.mouth===1?62:52,0);
- const m=avatarHairMeta['hair-'+a.hair],im=avatarArt['hair-'+a.hair],s=m.scale;
- g.save();g.filter=hairFilters[a.hairColor];g.drawImage(im,nx+(m.crop[0]-m.anchor[0])*s,ny+(m.crop[1]-m.anchor[1]-20)*s,(m.crop[2]-m.crop[0])*s,(m.crop[3]-m.crop[1])*s);g.restore();
- if(a.accessory===1||a.accessory===2)sprite('accessory-'+(a.accessory-1),nx,ny-87,179,0);
- else if(a.accessory===3||a.accessory===4){g.save();g.translate(nx+81,ny-148);g.rotate(.35);sprite('accessory-'+(a.accessory-1),0,0,45,0);g.restore()}
+ const sprite=(name,x,y,width,height,filter='none')=>{const im=avatarArt[name];const h=height||width*im.naturalHeight/im.naturalWidth;g.save();g.filter=filter;g.drawImage(im,x-width/2,y-h/2,width,h);g.restore()};
+ const pair=(name,y,eyeWidth,separation,filter='none')=>{const im=avatarArt[name],half=im.naturalWidth/2;
+  // Fit each left/right component independently; changing expression never changes eye spacing.
+  for(let side=0;side<2;side++){const c=avatarComponent(name,side),h=eyeWidth*c.h/c.w;g.save();g.filter=filter;g.drawImage(im,c.x,c.y,c.w,c.h,nx+(side?separation:-separation)-eyeWidth/2,y-h/2,eyeWidth,h);g.restore()}
+ };
+ const hair=a.hair===4?avatarCleanHair():avatarArt['hair-'+a.hair];
+ // Per-style bounds are calibrated around the same scalp and forehead, not the sprite-sheet cell.
+ const layouts=[[-171,-335,342,275],[-176,-320,352,320],[-184,-325,368,395],[-176,-335,352,280],[-186,-337,380,320],[-211,-330,422,335]];
+ const [hx,hy,hw,hh]=layouts[a.hair];
+ const hairLayer=()=>{g.save();g.filter=hairFilters[a.hairColor];const sw=hair.naturalWidth||hair.width;g.drawImage(hair,0,0,sw,hair.naturalHeight||hair.height,nx+hx,ny+hy,hw,hh);g.restore()};
+ g.save();hairLayer();
+ const f=avatarArt['face-'+a.face],width=[300,282,310][a.face],fh=width*f.naturalHeight/f.naturalWidth;
+ // Anchor every base by the bottom of its neck, which stays inside the collar.
+ sprite('face-'+a.face,nx,ny+25-fh/2,width,fh,skinFilters[a.skin]);
+ // Only the upper fringe and the outside side locks go in front of the face.
+ g.save();g.beginPath();g.rect(nx-250,ny-400,500,520);g.ellipse(nx,ny-89,119,103,0,0,Math.PI*2);g.clip('evenodd');hairLayer();g.restore();
+ pair('brows-'+a.brows,ny-151,[32,32,31,28][a.brows],52,hairFilters[a.hairColor]);
+ pair('eyes-'+a.eyes,ny-116,[26,30,34,32][a.eyes],52);
+ sprite('nose-'+a.nose,nx,ny-77,[13,15,13,11][a.nose],0,skinFilters[a.skin]);
+ sprite('mouth-'+a.mouth,nx,ny-48,[48,56,40,17][a.mouth],0);
+ if(a.accessory===1||a.accessory===2)sprite('accessory-'+(a.accessory-1),nx,ny-115,150,0);
+ else if(a.accessory===3||a.accessory===4){g.save();g.translate(nx+108,ny-201);g.rotate(.35);sprite('accessory-'+(a.accessory-1),0,0,38,0);g.restore()}
  g.restore();
+}
+// Alpha bounds avoid counting the blank gap between a pair as part of either eye or eyebrow.
+var avatarComponentCache;
+function avatarComponent(name,side){
+ if(!avatarComponentCache)avatarComponentCache=new Map();const key=name+':'+side;if(avatarComponentCache.has(key))return avatarComponentCache.get(key);
+ const im=avatarArt[name],c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const q=c.getContext('2d',{willReadFrequently:true});q.drawImage(im,0,0);const d=q.getImageData(0,0,c.width,c.height).data,from=side?Math.floor(c.width/2):0,to=side?c.width:Math.floor(c.width/2);let left=to,top=c.height,right=from,bottom=0;
+ for(let y=0;y<c.height;y++)for(let x=from;x<to;x++)if(d[(y*c.width+x)*4+3]>100){left=Math.min(left,x);right=Math.max(right,x+1);top=Math.min(top,y);bottom=Math.max(bottom,y+1)}
+ const result={x:left,y:top,w:Math.max(1,right-left),h:Math.max(1,bottom-top)};avatarComponentCache.set(key,result);return result;
+}
+var avatarCleanHairCache;
+function avatarCleanHair(){
+ if(avatarCleanHairCache)return avatarCleanHairCache;
+ const im=avatarArt['hair-4'],c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const q=c.getContext('2d',{willReadFrequently:true});q.drawImage(im,0,0);const image=q.getImageData(0,0,c.width,c.height),d=image.data,w=c.width,h=c.height,seen=new Uint8Array(w*h),queue=new Int32Array(w*h);let best={area:0,left:0,top:0,right:w,bottom:h};
+ for(let seed=0;seed<w*h;seed++){if(seen[seed]||d[seed*4+3]<70)continue;let start=0,end=1,left=w,top=h,right=0,bottom=0;queue[0]=seed;seen[seed]=1;
+  while(start<end){const i=queue[start++],x=i%w,y=Math.floor(i/w);left=Math.min(left,x);right=Math.max(right,x+1);top=Math.min(top,y);bottom=Math.max(bottom,y+1);for(const n of [x?i-1:-1,x<w-1?i+1:-1,y?i-w:-1,y<h-1?i+w:-1])if(n>=0&&!seen[n]&&d[n*4+3]>=70){seen[n]=1;queue[end++]=n}}
+  if(end>best.area)best={area:end,left,top,right,bottom};
+ }
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<best.left-2||x>best.right+2||y<best.top-2||y>best.bottom+2)d[(y*w+x)*4+3]=0;
+ q.putImageData(image,0,0);avatarCleanHairCache=c;return c;
 }
