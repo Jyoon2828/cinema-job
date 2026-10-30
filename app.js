@@ -10,6 +10,11 @@ const jobs=[
 let state={job:0,step:0,name:'',work:'',ability:'',wish:'',theme:0,style:0,zoom:1,px:0,py:0,angle:0};try{Object.assign(state,JSON.parse(localStorage.getItem('filmcareers-v1')||'{}'));state.step=0;state.job=Math.max(0,Math.min(7,+state.job||0))}catch{}
 const colors=['#9274ae','#6b98ac','#ce8b9c','#be9a54'];const photo=new Image(),atlases=[new Image(),new Image()];let atlas=atlases[0];let hasPhoto=false,ready=false,stream=null;const $=s=>document.querySelector(s),stage=$('#stage'),card=$('#card'),ctx=card.getContext('2d');atlases.forEach((a,i)=>{a.src='assets/careers-'+i+'.png';a.onload=()=>{if(i===state.style){atlas=a;ready=true}draw()};a.onerror=()=>toast('그림을 불러오지 못했어요. 새로고침해 주세요.')});state.style=state.style===1?1:0;atlas=atlases[state.style];const steps=['직업 탐색','내 얼굴 만들기','조사 내용','카드 완성'];
 let faceMode=state.faceMode==='avatar'?'avatar':'photo',avatarTab='hair';state.avatar={...avatarDefaults(),...(state.avatar||{})};for(const [key,,opts]of avatarGroups())state.avatar[key]=Math.max(0,Math.min(opts.length-1,Math.floor(+state.avatar[key]||0)));
+const avatarHairMeta={"hair-0": {"crop": [37, 26, 485, 432], "anchor": [256, 450], "scale": 0.55}, "hair-1": {"crop": [27, 71, 480, 512], "anchor": [256, 450], "scale": 0.55}, "hair-2": {"crop": [0, 43, 491, 530], "anchor": [256, 420], "scale": 0.6}, "hair-3": {"crop": [23, 7, 486, 409], "anchor": [256, 450], "scale": 0.55}, "hair-4": {"crop": [39, 0, 512, 459], "anchor": [256, 450], "scale": 0.55}, "hair-5": {"crop": [0, 46, 499, 461], "anchor": [256, 390], "scale": 0.58}};
+const avatarArt={};let avatarArtFailed=false;
+function avatarArtReady(){return Object.values(avatarArt).length===29&&Object.values(avatarArt).every(im=>im.complete&&im.naturalWidth>0)}
+for(const [prefix,n]of [['hair',6],['face',3],['eyes',4],['brows',4],['nose',4],['mouth',4],['accessory',4]])for(let i=0;i<n;i++){const key=prefix+'-'+i,im=new Image();avatarArt[key]=im;im.onload=()=>{if(avatarArtReady()){if(state.step===1&&faceMode==='avatar')render();else draw()}};im.onerror=()=>{avatarArtFailed=true;toast('꾸밈 그림을 불러오지 못했어요. 새로고침해 주세요.')};im.src='assets/avatar/'+key+'.webp'}
+
 function persist(){state.faceMode=faceMode;let t={...state};delete t.step;try{localStorage.setItem('filmcareers-v1',JSON.stringify(t))}catch{}}
 function toast(s){$('#toast').textContent=s;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',3000)}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -45,7 +50,7 @@ function rr(g,x,y,w,h,r,fill){g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fi
 function portrait(g,x,y,w,h){if(faceMode==='avatar'){drawCostume(g,x,y,w,h);return;}g.save();g.translate(x,y);g.beginPath();g.rect(0,0,w,h);g.clip();const fit=Math.min(w/600,h/600);g.fillStyle='#fff7e6';g.fillRect(0,0,w,h);g.translate((w-600*fit)/2,(h-600*fit)/2);g.scale(fit,fit);w=600;h=600;const cw=atlas.naturalWidth/4,ch=atlas.naturalHeight/2;g.fillStyle='#eee9dd';g.fillRect(0,0,w,h);if(ready)g.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch,cw,ch,0,0,w,h);const faces=faceMaps[state.style||0],f=faces[state.job];const cx=w*f[0],cy=h*f[1],rx=w*f[2],ry=h*f[3];if(hasPhoto){g.save();g.beginPath();g.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);g.clip();g.fillStyle='#f0d7bc';g.fill();g.translate(cx+state.px*w/600,cy+state.py*h/600);g.rotate(state.angle*Math.PI/180);const scale=Math.max(rx*2/photo.width,ry*2/photo.height)*state.zoom;g.drawImage(photo,-photo.width*scale/2,-photo.height*scale/2,photo.width*scale,photo.height*scale);g.restore()}g.restore()}
 function wrap(g,str,x,y,maxWidth,lineH,maxLines){let lines=[],line='';for(let ch of str){if(ch==='\n'){lines.push(line);line='';continue}if(g.measureText(line+ch).width>maxWidth&&line){lines.push(line);line=ch}else line+=ch}if(line)lines.push(line);lines.slice(0,maxLines).forEach((s,i)=>g.fillText(s,x,y+i*lineH));return lines.length}
 function draw(){const j=jobs[state.job],accent=colors[state.theme]||colors[0];ctx.clearRect(0,0,1240,1754);ctx.fillStyle='#fffdf8';ctx.fillRect(0,0,1240,1754);rr(ctx,45,45,1150,1664,28,'#fffdf8');ctx.fillStyle=accent;ctx.fillRect(0,0,1240,230);ctx.fillStyle='#edd2a1';ctx.font='700 23px Nanum,sans-serif';ctx.fillText('FILM MAKERS  /  나의 영화 직업',70,74);ctx.fillStyle='white';ctx.font='700 67px Nanum,sans-serif';ctx.fillText(j.n,70,159);ctx.save();rr(ctx,70,265,1100,650,22);ctx.clip();portrait(ctx,70,265,1100,650);ctx.restore();ctx.fillStyle=accent;ctx.font='700 30px Nanum,sans-serif';ctx.fillText((state.name||'나')+'의 영화 직업 이야기',70,976);const fields=[['하는 일',state.work||'이 직업이 하는 일을 내 말로 정리해 보세요.'],['필요한 능력과 태도',state.ability||'필요한 능력과 태도를 적어 보세요.'],['내가 해보고 싶은 일',state.wish||'이 직업을 맡으면 해보고 싶은 일을 적어 보세요.']];fields.forEach(([label,value],i)=>{let y=1020+i*201;rr(ctx,70,y,1100,181,14,i%2===0?'#f3f2e9':'#edf2ee');ctx.fillStyle=accent;ctx.font='700 28px Nanum,sans-serif';ctx.fillText(label,94,y+39);ctx.fillStyle='#30453c';value=value.replace(/\s+/g,' ');let fs=30;while(fs>22){ctx.font=`${fs}px Nanum,sans-serif`;if(value.length*fs<=1050*3)break;fs--}ctx.font=`${fs}px Nanum,sans-serif`;wrap(ctx,value,94,y+80,1050,37,3)});ctx.fillStyle='#718278';ctx.font='21px Nanum,sans-serif';ctx.fillText('서로 다른 재능이 모여, 한 편의 영화를 만듭니다.',70,1690);const pc=$('#portrait');if(pc){const g=pc.getContext('2d');g.clearRect(0,0,600,600);portrait(g,0,0,600,600)}}
-function download(){card.toBlob(blob=>{if(!blob)return toast('이미지를 저장하지 못했어요. 다시 시도해 주세요.');const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=`영화직업카드_${jobs[state.job].n}_${(state.name||'나').replace(/[\\/:*?"<>|]/g,'')}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('이미지를 저장했어요. 다운로드 폴더를 확인해 주세요.');},'image/png')}
+function download(){if(faceMode==='avatar'&&!avatarArtReady())return toast('꾸밈 그림을 모두 불러온 뒤 저장해 주세요.');card.toBlob(blob=>{if(!blob)return toast('이미지를 저장하지 못했어요. 다시 시도해 주세요.');const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=`영화직업카드_${jobs[state.job].n}_${(state.name||'나').replace(/[\\/:*?"<>|]/g,'')}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('이미지를 저장했어요. 다운로드 폴더를 확인해 주세요.');},'image/png')}
 
 const faceMaps=[[[0.49, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.51, 0.4, 0.165, 0.175], [0.44, 0.36, 0.165, 0.175], [0.5, 0.36, 0.165, 0.175], [0.39, 0.38, 0.165, 0.175], [0.5, 0.37, 0.165, 0.175]], [[0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.49, 0.41, 0.165, 0.175], [0.6, 0.4, 0.165, 0.175], [0.57, 0.42, 0.165, 0.175], [0.48, 0.39, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175]]];
 function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}"><span class="variantart" style="background-image:url(assets/careers-${i}.png);background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span><span>${i===0?'남':'녀'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
@@ -97,14 +102,14 @@ function avatarGroups(){return [
  ['skin','피부색',['밝은 살구','#f4c7a1','#dfaa7d','#bd8059','#965e40','#70452f']],
  ['hair','머리',['짧은 머리','단발','긴 머리','곱슬머리','묶은 머리','양 갈래']],
  ['hairColor','머리색',['#34251f','#64402c','#956338','#c49052','#422d50','#9d5665']],
- ['eyes','눈',['동그란 눈','반짝이는 눈','웃는 눈','초승달 눈','편안한 눈']],
- ['brows','눈썹',['부드럽게','일자 눈썹','씩씩하게']],
- ['nose','코',['작은 코','동그란 코','오똑한 코']],
+ ['eyes','눈',['동그란 눈','반짝이는 눈','웃는 눈','초승달 눈']],
+ ['brows','눈썹',['부드럽게','일자 눈썹','씩씩하게','짧은 눈썹']],
+ ['nose','코',['작은 코','동그란 코','오똑한 코','긴 코']],
  ['mouth','입',['방긋 미소','활짝 웃음','작은 미소','오! 놀라움']],
- ['accessory','안경·장식',['없음','둥근 안경','네모 안경','머리핀']]]}
+ ['accessory','안경·장식',['없음','둥근 안경','네모 안경','분홍 머리핀','별 머리핀']]]}
 function renderAvatar(){
  const groups=avatarGroups(),item=groups.find(v=>v[0]===avatarTab)||groups[0],[key,label,options]=item;
- stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface"><canvas id="portrait" width="600" height="600" aria-label="선택한 얼굴과 직업 의상이 합쳐진 아바타"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div><h3>${label} 고르기</h3><div class="avatarChoices">${options.map((o,i)=>`<button class="avatarChoice ${state.avatar[key]===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${state.avatar[key]===i}"><canvas width="104" height="104" aria-hidden="true"></canvas><span>${key==='skin'?'피부색 '+(i+1):key==='hairColor'?'머리색 '+(i+1):o}${state.avatar[key]===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
+ stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸밈 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="선택한 얼굴과 직업 의상이 합쳐진 아바타"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div><h3>${label} 고르기</h3><div class="avatarChoices">${options.map((o,i)=>`<button class="avatarChoice ${state.avatar[key]===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${state.avatar[key]===i}"><canvas width="104" height="104" aria-hidden="true"></canvas><span>${key==='skin'?'피부색 '+(i+1):key==='hairColor'?'머리색 '+(i+1):o}${state.avatar[key]===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
  document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a={...state.avatar,[key]:i},g=b.querySelector('canvas').getContext('2d');g.scale(.43,.43);paintAvatar(g,121,220,a);b.onclick=()=>{state.avatar[key]=i;persist();render()}});
  $('#randomAvatar').onclick=()=>{for(const [k,,opts]of groups)state.avatar[k]=Math.floor(Math.random()*opts.length);persist();render()};
@@ -112,43 +117,20 @@ function renderAvatar(){
 }
 // Layered canvas artwork remains sharp in both the editor and exported card.
 function paintAvatar(g,nx,ny,a){
- const skin=['#ffe0bf','#f4c7a1','#dfaa7d','#bd8059','#965e40','#70452f'][a.skin],hair=['#34251f','#64402c','#956338','#c49052','#422d50','#9d5665'][a.hairColor];
- const rx=[94,84,102][a.face],ry=[100,112,99][a.face],cy=ny-ry+2;
- const oval=(x,y,w,h,color)=>{g.beginPath();g.ellipse(x,y,w,h,0,0,Math.PI*2);g.fillStyle=color;g.fill()};
- const line=(x1,y1,cx,cy,x2,y2,color,width=5)=>{g.beginPath();g.moveTo(x1,y1);g.quadraticCurveTo(cx,cy,x2,y2);g.strokeStyle=color;g.lineWidth=width;g.lineCap='round';g.stroke()};
- g.save();g.translate(nx,0);
- // Back hair sits behind the neck, ears and face.
- if(a.hair===1)oval(0,cy+10,rx+18,ry+17,hair);
- if(a.hair===2){g.fillStyle=hair;g.beginPath();g.roundRect(-rx-18,cy-85,(rx+18)*2,ry+160,45);g.fill()}
- if(a.hair===4){oval(95,cy+18,40,85,hair);oval(105,cy-42,36,34,hair)}
- if(a.hair===5){oval(-112,cy+22,32,77,hair);oval(112,cy+22,32,77,hair)}
- g.fillStyle=skin;g.beginPath();g.roundRect(-28,ny-25,56,52,15);g.fill();
- oval(-rx+1,cy+15,18,27,skin);oval(rx-1,cy+15,18,27,skin);
- oval(0,cy,rx,ry,skin);
- // A subtle edge gives the face a soft illustrated finish.
- g.strokeStyle='#70452f25';g.lineWidth=2;g.stroke();
- oval(-rx+1,cy+16,8,14,'#cb7d7055');oval(rx-1,cy+16,8,14,'#cb7d7055');
- oval(-57,cy+40,18,9,'#ed8b8a55');oval(57,cy+40,18,9,'#ed8b8a55');
- const browY=cy-30;
- for(const x of [-40,40]){if(a.brows===0)line(x-15,browY,x,browY-10,x+15,browY,hair,6);else if(a.brows===1)line(x-15,browY,x,browY-2,x+15,browY,hair,6);else line(x-16,browY+(x<0?-5:5),x,browY,x+16,browY+(x<0?5:-5),hair,6)}
- for(const x of [-39,39]){if(a.eyes<=1){oval(x,cy+1,a.eyes===1?15:12,a.eyes===1?21:18,'#352720');oval(x-4,cy-7,4,6,'white');if(a.eyes===1)oval(x+5,cy+8,3,3,'white')}
- else if(a.eyes===2)line(x-13,cy+6,x,cy-13,x+13,cy+6,'#352720',6);
- else if(a.eyes===3)line(x-14,cy-2,x,cy+16,x+14,cy-2,'#352720',6);
- else{line(x-12,cy,x,cy+3,x+12,cy,'#352720',5);oval(x,cy+5,5,8,'#352720')}}
- if(a.nose===0)line(-4,cy+25,0,cy+30,5,cy+25,'#b77c65',4);
- if(a.nose===1)oval(0,cy+25,7,6,'#cb8f75');
- if(a.nose===2){g.beginPath();g.moveTo(0,cy+12);g.lineTo(-6,cy+28);g.lineTo(6,cy+28);g.strokeStyle='#b77c65';g.lineWidth=3;g.stroke()}
- if(a.mouth===0)line(-19,cy+51,0,cy+75,19,cy+51,'#a64c4a',5);
- if(a.mouth===1){g.fillStyle='#8d3b3e';g.beginPath();g.moveTo(-24,cy+48);g.quadraticCurveTo(0,cy+57,24,cy+48);g.quadraticCurveTo(21,cy+86,0,cy+84);g.quadraticCurveTo(-21,cy+86,-24,cy+48);g.fill();g.fillStyle='white';g.fillRect(-16,cy+52,32,7);oval(0,cy+76,12,6,'#ed8c91')}
- if(a.mouth===2)line(-12,cy+56,0,cy+63,12,cy+56,'#a64c4a',4);
- if(a.mouth===3)oval(0,cy+59,11,15,'#91484a');
- // Hair cap and a curved fringe, with no rigid straight edge.
- g.fillStyle=hair;g.beginPath();g.moveTo(-rx-3,cy+1);g.bezierCurveTo(-rx-28,cy-ry-37,rx+25,cy-ry-36,rx+4,cy+2);g.quadraticCurveTo(rx-15,cy-36,rx-26,cy-57);g.quadraticCurveTo(24,cy-21,8,cy-47);g.quadraticCurveTo(-25,cy-4,-33,cy-41);g.quadraticCurveTo(-rx+11,cy-21,-rx-3,cy+1);g.fill();
- if(a.hair===0){for(let i=0;i<4;i++){g.beginPath();g.moveTo(-65+i*30,cy-ry+18);g.quadraticCurveTo(-56+i*30,cy-ry-35,-30+i*30,cy-ry-12);g.lineTo(-10+i*30,cy-ry+24);g.fill()}}
- if(a.hair===3){for(let i=0;i<9;i++)oval(-90+i*22,cy-ry+12+Math.abs(4-i)*7,23,25,hair)}
- if(a.hair===5){oval(-106,cy+3,10,8,'#e5b440');oval(106,cy+3,10,8,'#e5b440')}
- g.strokeStyle='#ffffff18';g.lineWidth=5;g.beginPath();g.moveTo(-60,cy-ry+25);g.quadraticCurveTo(-15,cy-ry-2,33,cy-ry+13);g.stroke();
- if(a.accessory===1||a.accessory===2){g.strokeStyle='#514b58';g.lineWidth=5;for(const x of [-39,39]){g.beginPath();if(a.accessory===1)g.ellipse(x,cy+2,27,29,0,0,Math.PI*2);else g.roundRect(x-27,cy-20,54,44,10);g.stroke()}line(-12,cy,0,cy-7,12,cy,'#514b58',4)}
- if(a.accessory===3){g.save();g.translate(rx-15,cy-52);g.rotate(.5);g.fillStyle='#e69aaf';g.beginPath();g.roundRect(-22,-5,44,10,5);g.fill();g.restore()}
+ if(!avatarArtReady())return;
+ const sprite=(name,x,y,width,height,filter='none')=>{const im=avatarArt[name];if(!im?.naturalWidth)return;const h=height||width*im.naturalHeight/im.naturalWidth;g.save();g.filter=filter;g.drawImage(im,x-width/2,y-h/2,width,h);g.restore()};
+ const skinFilters=['brightness(1.10) saturate(.85)','none','brightness(.90) saturate(1.08)','brightness(.77) saturate(1.1)','brightness(.64) saturate(1.1)','brightness(.52) saturate(1.08)'];
+ const hairFilters=['brightness(.67)','brightness(.86)','none','brightness(1.28) saturate(.85)','hue-rotate(285deg) brightness(.78)','hue-rotate(325deg) saturate(.65)'];
+ g.save();
+ const f=avatarArt['face-'+a.face],fh=230*f.naturalHeight/f.naturalWidth;
+ sprite('face-'+a.face,nx,ny-199+fh/2,230,fh,skinFilters[a.skin]);
+ sprite('brows-'+a.brows,nx,ny-128,135,0,hairFilters[a.hairColor]);
+ sprite('eyes-'+a.eyes,nx,ny-88,133,0);
+ sprite('nose-'+a.nose,nx,ny-53,22,24,skinFilters[a.skin]);
+ sprite('mouth-'+a.mouth,nx,ny-22,a.mouth===1?62:52,0);
+ const m=avatarHairMeta['hair-'+a.hair],im=avatarArt['hair-'+a.hair],s=m.scale;
+ g.save();g.filter=hairFilters[a.hairColor];g.drawImage(im,nx+(m.crop[0]-m.anchor[0])*s,ny+(m.crop[1]-m.anchor[1]-20)*s,(m.crop[2]-m.crop[0])*s,(m.crop[3]-m.crop[1])*s);g.restore();
+ if(a.accessory===1||a.accessory===2)sprite('accessory-'+(a.accessory-1),nx,ny-87,179,0);
+ else if(a.accessory===3||a.accessory===4){g.save();g.translate(nx+81,ny-148);g.rotate(.35);sprite('accessory-'+(a.accessory-1),0,0,45,0);g.restore()}
  g.restore();
 }
