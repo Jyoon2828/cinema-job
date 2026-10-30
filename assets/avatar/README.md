@@ -12,4 +12,14 @@ Prompt set:
 2. Faces: three blank front-facing round/oval/chubby face bases with ears and neck, rosy peach softly painted skin, no hair, eyes, brows, nose or mouth, transparent background.
 3. Features: a 4×5 grid of independent eye pairs, eyebrow pairs, noses, mouths and glasses/hair clips; cute warm shaded watercolor/gouache style matching the film-crew reference, transparent gaps and no face or body.
 
-Components were separated into individual assets, cropped with their transparency intact, and aligned in app.js. manifest.json records source anchor alignment for hair. The avatar editor and PNG card export use the same image layers.
+Components were separated into individual assets, cropped with their transparency intact, and calibrated against common face landmarks in app.js. manifest.json documents the active registration coordinates.
+
+Proportion and costume correction (2026-10-30):
+- Each left/right eye and brow is measured by its own alpha bounds, keeping spacing stable across expressions.
+- All face shapes use a shared chin/neck origin and normalized height. Hair has independent registered bounds, a rear layer, and a front fringe/side-lock layer.
+- Thumbnail, tablet editor, and exported card use the same paintAvatar/drawCostume composition.
+- avatar-costumes-0.webp and avatar-costumes-1.webp are clean, headless costume atlases for the eight jobs in each style. They were edited from the original careers atlases with the built-in image tool, preserving clothing, hands, props, and painterly style while removing all stock heads, ears, hair, and head-worn headphones.
+- The painted sheet's row gutter is used to prevent adjacent costume fragments. Each collar has a measured registration; screens render behind the head and clothing below the chin renders in front.
+- The photo-mode atlases and masks are separate from avatar-mode costumes.
+
+Costume edit prompt: Remove heads, hair, ears and facial features from the 4-by-2 film crew atlas; retain torsos, short necks, hands, costumes, professional props and positions; reconstruct shoulders hidden by hair; use a true transparent background, no labels or drawn checkerboard.

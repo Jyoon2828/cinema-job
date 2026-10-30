@@ -6,3 +6,5 @@
 assets/careers-0.png: 첫 번째 인물 아틀라스
 assets/careers-1.png: 두 번째 인물 아틀라스
 assets/studio-banner.png: 촬영장 배너
+
+assets/avatar-costumes-0.webp, assets/avatar-costumes-1.webp: 내장 이미지 생성 도구로 기존 남녀 직업 그림을 편집한 투명 의상 아틀라스입니다. 모든 머리·귀·얼굴·머리카락을 제거하고 가려졌던 어깨를 복원했습니다. 의상·손·직업 도구·그림체를 유지하도록 제작했으며, 태블릿용 WebP로 변환했습니다. 아바타 모드에서만 사용합니다.
