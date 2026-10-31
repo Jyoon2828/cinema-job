@@ -167,3 +167,8 @@
  #infoContent .infoTop{display:none}
  .infoBody>p,.infoBody .skillLines{flex-shrink:0}
 }
+
+/* Selected role stays beside the avatar activity title. */
+.avatarHeading{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;min-width:0;line-height:1.3}
+.selectedJobName{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:#e3eee6;border:1px solid #c6dbcc;color:#245b50;font:20px StudioRound,Nanum,sans-serif;white-space:nowrap}
+@media(max-width:600px){.avatarHeading{gap:6px 9px}.selectedJobName{font-size:17px;padding:4px 9px}}

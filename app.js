@@ -72,13 +72,13 @@ async function openCamera(){try{if(!navigator.mediaDevices?.getUserMedia)throw E
 function stopCam(){stream?.getTracks().forEach(t=>t.stop());stream=null;$('#video').srcObject=null;$('#cameraDialog').close()}
 $('#snap').onclick=()=>{const v=$('#video');if(!v.videoWidth)return;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);photo.onload=()=>{hasPhoto=true;state.zoom=1;state.px=state.py=state.angle=0;render()};photo.src=c.toDataURL('image/jpeg',.9);stopCam()};$('#closeCam').onclick=stopCam;$('#cameraDialog').addEventListener('cancel',e=>{e.preventDefault();stopCam()});$('#help').onclick=()=>$('#helpDialog').showModal();$('#closeHelp').onclick=()=>$('#helpDialog').close();window.addEventListener('pagehide',()=>stream?.getTracks().forEach(t=>t.stop()));
 function rr(g,x,y,w,h,r,fill){g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill()}}
-function portrait(g,x,y,w,h){if(faceMode==='avatar'){drawCostume(g,x,y,w,h);return;}g.save();g.translate(x,y);g.beginPath();g.rect(0,0,w,h);g.clip();const fit=Math.min(w/600,h/600);g.fillStyle='#fff7e6';g.fillRect(0,0,w,h);g.translate((w-600*fit)/2,(h-600*fit)/2);g.scale(fit,fit);w=600;h=600;const cw=atlas.naturalWidth/4,ch=atlas.naturalHeight/2;g.fillStyle='#eee9dd';g.fillRect(0,0,w,h);if(ready)g.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch,cw,ch,0,0,w,h);const faces=faceMaps[state.style||0],f=faces[state.job];const cx=w*f[0],cy=h*f[1],rx=w*f[2],ry=h*f[3];if(hasPhoto){g.save();g.beginPath();g.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);g.clip();g.fillStyle='#f0d7bc';g.fill();g.translate(cx+state.px*w/600,cy+state.py*h/600);g.rotate(state.angle*Math.PI/180);const scale=Math.max(rx*2/photo.width,ry*2/photo.height)*state.zoom;g.drawImage(photo,-photo.width*scale/2,-photo.height*scale/2,photo.width*scale,photo.height*scale);g.restore()}g.restore()}
+function portrait(g,x,y,w,h){if(faceMode==='avatar'){drawCostume(g,x,y,w,h);return;}g.save();g.translate(x,y);g.beginPath();g.rect(0,0,w,h);g.clip();const fit=Math.min(w/600,h/600);g.fillStyle='#fff7e6';g.fillRect(0,0,w,h);g.translate((w-600*fit)/2,(h-600*fit)/2);g.scale(fit,fit);w=600;h=600;const cw=atlas.naturalWidth/4,ch=atlas.naturalHeight/2;g.fillStyle='#eee9dd';g.fillRect(0,0,w,h);if(ready){if(state.job===4&&state.style===1)drawCostume(g,0,0,w,h,avatarDefaults(),1,4);else g.drawImage(atlas,(state.job%4)*cw,Math.floor(state.job/4)*ch,cw,ch,0,0,w,h);}const faces=faceMaps[state.style||0],f=faces[state.job];const cx=w*f[0],cy=h*f[1],rx=w*f[2],ry=h*f[3];if(hasPhoto){g.save();g.beginPath();g.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);g.clip();g.fillStyle='#f0d7bc';g.fill();g.translate(cx+state.px*w/600,cy+state.py*h/600);g.rotate(state.angle*Math.PI/180);const scale=Math.max(rx*2/photo.width,ry*2/photo.height)*state.zoom;g.drawImage(photo,-photo.width*scale/2,-photo.height*scale/2,photo.width*scale,photo.height*scale);g.restore()}g.restore()}
 function wrap(g,str,x,y,maxWidth,lineH,maxLines){let lines=[],line='';for(let ch of str){if(ch==='\n'){lines.push(line);line='';continue}if(g.measureText(line+ch).width>maxWidth&&line){lines.push(line);line=ch}else line+=ch}if(line)lines.push(line);lines.slice(0,maxLines).forEach((s,i)=>g.fillText(s,x,y+i*lineH));return lines.length}
-function draw(){const j=jobs[state.job],accent=colors[state.theme]||colors[0];ctx.clearRect(0,0,1240,1754);ctx.fillStyle='#fffdf8';ctx.fillRect(0,0,1240,1754);rr(ctx,45,45,1150,1664,28,'#fffdf8');ctx.fillStyle=accent;ctx.fillRect(0,0,1240,230);ctx.fillStyle='#edd2a1';ctx.font='700 23px Nanum,sans-serif';ctx.fillText('FILM MAKERS  /  나의 영화 직업',70,74);ctx.fillStyle='white';ctx.font='67px StudioRound,Nanum,sans-serif';ctx.fillText(j.n,70,159);ctx.save();rr(ctx,70,265,1100,650,22);ctx.clip();portrait(ctx,70,265,1100,650);ctx.restore();ctx.fillStyle=accent;ctx.font='30px StudioRound,Nanum,sans-serif';ctx.fillText((state.name||'나')+'의 영화 직업 이야기',70,976);const fields=[['하는 일',state.work||'이 직업이 하는 일을 내 말로 정리해 보세요.'],['필요한 능력과 태도',state.ability||'필요한 능력과 태도를 적어 보세요.'],['내가 해보고 싶은 일',state.wish||'이 직업을 맡으면 해보고 싶은 일을 적어 보세요.']];fields.forEach(([label,value],i)=>{let y=1020+i*201;rr(ctx,70,y,1100,181,14,i%2===0?'#f3f2e9':'#edf2ee');ctx.fillStyle=accent;ctx.font='28px StudioRound,Nanum,sans-serif';ctx.fillText(label,94,y+39);ctx.fillStyle='#30453c';value=value.replace(/\s+/g,' ');let fs=30;while(fs>22){ctx.font=`${fs}px Nanum,sans-serif`;if(value.length*fs<=1050*3)break;fs--}ctx.font=`${fs}px Nanum,sans-serif`;wrap(ctx,value,94,y+80,1050,37,3)});ctx.fillStyle='#718278';ctx.font='21px Nanum,sans-serif';ctx.fillText('서로 다른 재능이 모여, 한 편의 영화를 만듭니다.',70,1690);const pc=$('#portrait');if(pc){const g=pc.getContext('2d');g.clearRect(0,0,600,600);portrait(g,0,0,600,600)}}
-function download(){if(faceMode==='avatar'&&!avatarArtReady())return toast('꾸밈 그림을 모두 불러온 뒤 저장해 주세요.');card.toBlob(blob=>{if(!blob)return toast('이미지를 저장하지 못했어요. 다시 시도해 주세요.');const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=`영화직업카드_${jobs[state.job].n}_${(state.name||'나').replace(/[\\/:*?"<>|]/g,'')}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('이미지를 저장했어요. 다운로드 폴더를 확인해 주세요.');},'image/png')}
+function draw(){if(avatarArtReady())document.querySelectorAll('[data-variant-preview]').forEach(c=>drawCostume(c.getContext('2d'),0,0,120,120,avatarDefaults(),+c.dataset.variantPreview,state.job));const j=jobs[state.job],accent=colors[state.theme]||colors[0];ctx.clearRect(0,0,1240,1754);ctx.fillStyle='#fffdf8';ctx.fillRect(0,0,1240,1754);rr(ctx,45,45,1150,1664,28,'#fffdf8');ctx.fillStyle=accent;ctx.fillRect(0,0,1240,230);ctx.fillStyle='#edd2a1';ctx.font='700 23px Nanum,sans-serif';ctx.fillText('FILM MAKERS  /  나의 영화 직업',70,74);ctx.fillStyle='white';ctx.font='67px StudioRound,Nanum,sans-serif';ctx.fillText(j.n,70,159);ctx.save();rr(ctx,70,265,1100,650,22);ctx.clip();portrait(ctx,70,265,1100,650);ctx.restore();ctx.fillStyle=accent;ctx.font='30px StudioRound,Nanum,sans-serif';ctx.fillText((state.name||'나')+'의 영화 직업 이야기',70,976);const fields=[['하는 일',state.work||'이 직업이 하는 일을 내 말로 정리해 보세요.'],['필요한 능력과 태도',state.ability||'필요한 능력과 태도를 적어 보세요.'],['내가 해보고 싶은 일',state.wish||'이 직업을 맡으면 해보고 싶은 일을 적어 보세요.']];fields.forEach(([label,value],i)=>{let y=1020+i*201;rr(ctx,70,y,1100,181,14,i%2===0?'#f3f2e9':'#edf2ee');ctx.fillStyle=accent;ctx.font='28px StudioRound,Nanum,sans-serif';ctx.fillText(label,94,y+39);ctx.fillStyle='#30453c';value=value.replace(/\s+/g,' ');let fs=30;while(fs>22){ctx.font=`${fs}px Nanum,sans-serif`;if(value.length*fs<=1050*3)break;fs--}ctx.font=`${fs}px Nanum,sans-serif`;wrap(ctx,value,94,y+80,1050,37,3)});ctx.fillStyle='#718278';ctx.font='21px Nanum,sans-serif';ctx.fillText('서로 다른 재능이 모여, 한 편의 영화를 만듭니다.',70,1690);const pc=$('#portrait');if(pc){const g=pc.getContext('2d');g.clearRect(0,0,600,600);portrait(g,0,0,600,600)}}
+function download(){if((faceMode==='avatar'||state.job===4&&state.style===1)&&!avatarArtReady())return toast('그림을 모두 불러온 뒤 저장해 주세요.');card.toBlob(blob=>{if(!blob)return toast('이미지를 저장하지 못했어요. 다시 시도해 주세요.');const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=`영화직업카드_${jobs[state.job].n}_${(state.name||'나').replace(/[\\/:*?"<>|]/g,'')}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('이미지를 저장했어요. 다운로드 폴더를 확인해 주세요.');},'image/png')}
 
-const faceMaps=[[[0.49, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.51, 0.4, 0.165, 0.175], [0.44, 0.36, 0.165, 0.175], [0.5, 0.36, 0.165, 0.175], [0.39, 0.38, 0.165, 0.175], [0.5, 0.37, 0.165, 0.175]], [[0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.49, 0.41, 0.165, 0.175], [0.6, 0.4, 0.165, 0.175], [0.57, 0.42, 0.165, 0.175], [0.48, 0.39, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175]]];
-function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}"><span class="variantart" style="background-image:url(${careerSources[i]});background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span><span>${i===0?'남':'여'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
+const faceMaps=[[[0.49, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.51, 0.4, 0.165, 0.175], [0.44, 0.36, 0.165, 0.175], [0.5, 0.36, 0.165, 0.175], [0.39, 0.38, 0.165, 0.175], [0.5, 0.37, 0.165, 0.175]], [[0.5, 0.4, 0.165, 0.175], [0.5, 0.4, 0.165, 0.175], [0.49, 0.41, 0.165, 0.175], [0.6, 0.4, 0.165, 0.175], [0.421667, 0.416667, 0.165, 0.175], [0.48, 0.39, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175], [0.52, 0.4, 0.165, 0.175]]];
+function variantPicker(){return `<div class="variantbox"><b>마음에 드는 인물 그림을 골라요</b><div class="variants">${[0,1].map(i=>`<button data-style="${i}" class="variant ${(state.style||0)===i?'selected':''}" aria-pressed="${(state.style||0)===i}">${state.job===4?`<canvas class="variantart" data-variant-preview="${i}" width="120" height="120" aria-hidden="true"></canvas>`:`<span class="variantart" style="background-image:url(${careerSources[i]});background-position:${(state.job%4)*100/3}% ${Math.floor(state.job/4)*100}%"></span>`}<span>${i===0?'남':'여'} ${(state.style||0)===i?'✓':''}</span></button>`).join('')}</div></div>`}
 function researchPanel(compact=false){const r=research[state.job];return `<${compact?'details':'section'} class="research">${compact?'<summary>촬영장 이야기와 자료 다시 보기</summary>':'<h3>🎞 촬영장에서는 이렇게 일해요</h3>'}<span class="phase">${r.phase}</span><ol class="daylist">${r.day.map(s=>`<li>${s}</li>`).join('')}</ol><p class="team"><b>함께 일하는 사람</b><br>${r.team}</p><div class="mission"><b>작은 직업 체험</b><p>${r.mission}</p></div><h3>🔎 진짜 영화인의 이야기</h3><p class="watch"><b>이것을 찾아보세요</b><br>${r.watch}</p><div class="resourcecards">${(r.resources||[]).map(l=>`<a href="${l.url}" target="_blank" rel="noopener noreferrer"><small>${l.provider}</small><strong>${l.title} ↗</strong><span>${l.note}</span></a>`).join('')}<a href="${r.url}" target="_blank" rel="noopener noreferrer"><small>${r.provider}</small><strong>${r.title} ↗</strong><span>${r.note}</span></a></div><p class="resourceNote">자료 확인: 2026.10.30 · 자료는 새 창에서 열려요.</p></${compact?'details':'section'}>`}
 
 $('#closeInfo').onclick=()=>$('#infoDialog').close();function fitViewport(){document.documentElement.style.setProperty('--app-h',(window.visualViewport?.height||innerHeight)+'px')}window.visualViewport?.addEventListener('resize',fitViewport);window.addEventListener('resize',fitViewport);fitViewport();document.fonts.ready.then(()=>draw());render();
@@ -111,15 +111,17 @@ function renderAvatar(){
  const groups=avatarGroups(),selected=groups.find(v=>v[0]===avatarTab)||groups[0],isAccessory=selected[0]==='accessory';
  const [groupKey,label,options]=isAccessory?[accessoryTab,({glasses:'안경',hat:'모자',pin:'머리핀'})[accessoryTab],accessoryOptions(accessoryTab)]:selected;
  const key=groupKey==='hair'&&state.style===0?'maleHair':groupKey,activeIndex=state.avatar[key];
- stage.innerHTML=`<div class="stageHeading"><h2>나만의 아바타 꾸미기</h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${key==='clothes'&&i?`<i class="clothChip" style="background:${clothingOptions[i][2]}" aria-hidden="true"></i>`:''}${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
+ stage.innerHTML=`<div class="stageHeading"><h2 class="avatarHeading">나만의 아바타 꾸미기<span class="selectedJobName">${esc(jobs[state.job].n)}</span></h2><div class="compactVariants">${variantPicker()}</div></div>${faceModeTabs()}<div class="avatarEditor"><div class="avatarSurface">${!avatarArtReady()?'<span class="avatarLoading">꾸미기 그림을 불러오는 중…</span>':''}<canvas id="portrait" width="600" height="600" aria-label="내가 꾸민 얼굴과 직업 의상"></canvas></div><section class="avatarControls"><div class="avatarTabs">${groups.map(([k,n])=>`<button data-avatar-tab="${k}" class="${selected[0]===k?'primary':''}" aria-pressed="${selected[0]===k}">${n}</button>`).join('')}</div>${isAccessory?`<div class="accessoryTabs">${[['glasses','안경'],['hat','모자'],['pin','머리핀']].map(([k,n])=>`<button data-accessory-tab="${k}" class="${key===k?'primary':''}" aria-pressed="${key===k}">${n}</button>`).join('')}</div>`:''}<h3>${label} 고르기</h3><div class="avatarChoices" data-count="${options.length}">${options.map((o,i)=>`<button class="avatarChoice ${activeIndex===i?'selected':''}" data-avatar-option="${i}" aria-pressed="${activeIndex===i}"><canvas width="160" height="160" aria-hidden="true"></canvas><span>${key==='clothes'&&i?`<i class="clothChip" style="background:${clothingOptions[i][2]}" aria-hidden="true"></i>`:''}${o}${activeIndex===i?' ✓':''}</span></button>`).join('')}</div><div class="avatarActions"><button id="randomAvatar">🎲 골고루 바꾸기</button><button id="resetAvatar">처음 모습</button></div></section></div><div class="bottom"><button id="back">← 직업 탐색</button><button id="next" class="primary">조사 내용 정리 →</button></div>`;
  document.querySelectorAll('[data-avatar-tab]').forEach(b=>b.onclick=()=>{avatarTab=b.dataset.avatarTab;render()});
  document.querySelectorAll('[data-accessory-tab]').forEach(b=>b.onclick=()=>{accessoryTab=b.dataset.accessoryTab;render()});
  document.querySelectorAll('[data-avatar-option]').forEach(b=>{const i=+b.dataset.avatarOption,a=avatarChoicePreview(key,i),g=b.querySelector('canvas').getContext('2d');if(key==='clothes')drawCostume(g,0,0,160,160,a);else paintAvatar(g,80,147,a,.34);b.onclick=()=>{state.avatar[key]=i;if(key==='hat')state.avatar.hatChosen=true;persist();render()}});
  $('#randomAvatar').onclick=()=>{state.avatar={...state.avatar,hair:state.style===1?Math.floor(Math.random()*5):state.avatar.hair,maleHair:state.style===0?Math.floor(Math.random()*3):state.avatar.maleHair,eyes:Math.floor(Math.random()*2),mouth:Math.floor(Math.random()*2),glasses:Math.floor(Math.random()*3),pin:Math.floor(Math.random()*3),clothes:Math.floor(Math.random()*6)};persist();render()};
  $('#resetAvatar').onclick=()=>{state.avatar=avatarDefaults();persist();render()};$('#back').onclick=()=>go(0);$('#next').onclick=()=>go(2);
 }
+function costumeStyle(style,job){return job===4?0:style}
 var costumeCache,garmentMaskCache,accessorySpriteCache,headSpriteCache,foregroundCache;
 function costumeLayer(a=state.avatar,style=state.style||0,job=state.job){
+ style=costumeStyle(style,job);
  if(!costumeCache)costumeCache=new Map();const key=style+':'+job+':'+a.clothes;if(costumeCache.has(key))return costumeCache.get(key);
  const source=costumeAtlases[style];if(!source.complete||!source.naturalWidth)return null;
  const result=document.createElement('canvas');result.width=result.height=600;
@@ -132,7 +134,7 @@ function costumeLayer(a=state.avatar,style=state.style||0,job=state.job){
 function drawCostume(g,x,y,w,h,a=state.avatar,style=state.style||0,job=state.job){
  g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle='#fffaf0';g.fillRect(x,y,w,h);
  const fit=Math.min(w/600,h/600);g.translate(x+(w-600*fit)/2,y+(h-600*fit)/2);g.scale(fit,fit);
- const nx=avatarCostumeMaps[style][job][0],costume=costumeLayer(a,style,job);
+ const nx=avatarCostumeMaps[costumeStyle(style,job)][job][0],costume=costumeLayer(a,style,job);
  if(costume)g.drawImage(costume,0,0);paintAvatar(g,nx,374,a,1,style);
  const tools=foregroundTools(style,job,a);if(tools)g.drawImage(tools,0,0);
  g.restore();
@@ -169,10 +171,11 @@ function headSprite(index,expression){
 // Held equipment and hands render in front of hair; garment colors and
 // stock necks do not. Screens and the lighting fixture stay behind the head.
 function foregroundTools(style,job,a=state.avatar){
+ style=costumeStyle(style,job);
  if(!foregroundCache)foregroundCache=new Map();const key=style+':'+job+':'+a.clothes;if(foregroundCache.has(key))return foregroundCache.get(key);
  const base=costumeLayer(avatarDefaults(),style,job);if(!base)return null;
  const c=document.createElement('canvas');c.width=c.height=600;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(base,0,0);
- const image=g.getImageData(0,0,600,600),d=image.data,nx=avatarCostumeMaps[style][job][0],hue=[178,5,212,275,43,145,340,215][job];
+ const image=g.getImageData(0,0,600,600),d=image.data,material=garmentMask(image,style,job),nx=avatarCostumeMaps[style][job][0],hue=[178,5,212,275,43,145,340,215][job];
  for(let i=0;i<360000;i++){const x=i%600,y=Math.floor(i/600),k=i*4;
   // The whole lamp head belongs behind the avatar. Hue-based foreground
   // extraction split its yellow bulb from its dark frame and cut into hats.
@@ -180,7 +183,7 @@ function foregroundTools(style,job,a=state.avatar){
   const region=[y>285&&x>190&&x<580,y>340&&x>140&&x<590,y>285&&x<535&&y<580,(style===0?x>450:x<220)||y>405&&x>200&&x<550,style===0?x>355||y>455&&x>230:x<250||y>455&&x<300,x<270&&y>290&&y<500||y>440,y>500,y>390||x<260&&y>285][job];
   if(!region||!d[k+3]){d[k+3]=0;continue}
   const[h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]),diff=Math.min(Math.abs(h-hue),360-Math.abs(h-hue)),skin=h>=12&&h<=32&&d[k]>160&&d[k+1]>90&&d[k+2]>55,neck=(skin||h>=8&&h<=40&&s>.25)&&Math.abs(x-nx)<70&&y<374;
-  if(neck||!(s<.26||diff>35||skin))d[k+3]=0;
+  if(material[i]||Math.abs(x-nx)<74&&y<374&&job!==0&&job!==2||neck||!(s<.26||diff>35||skin))d[k+3]=0;
  }
  // Use the original pixels only to find the foreground. Its visible colors
  // always come from the selected costume, so highlights cannot restore the
@@ -294,6 +297,7 @@ function garmentMask(image,style,job){
   for(const component of components)if(component.length>=Math.max(job===5?500:100,largest*(job===5?.10:.035)))for(const i of component)mask[i]=1;
  }
  completeGarmentDetails(image,mask,style,job,hands);
+ completeCollarSeams(image,mask,style,job,hands);
  garmentMaskCache.set(key,mask);return mask;
 }
 // Small cloth details can sit inside a conservative prop outline or form a
@@ -327,14 +331,43 @@ function completeGarmentDetails(image,mask,style,job,hands){
   if(job===2&&style===1&&h>=245&&h<=315&&s>.14&&v>.12&&((x>=300&&x<=358&&y>=400&&y<=435)||(x>=359&&x<=405&&y>=399&&y<=470)||(x>=400&&x<=540&&y>=532&&y<=562)))mask[i]=2;
  }
 }
+// Recover the painted outline of the collar as the same material as its
+// fabric. These nearly neutral dark pixels lose their source hue when they
+// mix with the adjacent skin / undershirt, so hue-only selection misses them.
+const soundStraps=[
+ [[[181,335],[214,333],[288,495],[257,507],[227,423]],[[309,333],[340,337],[365,500],[337,507],[326,414]]],
+ [[[249,332],[285,326],[339,503],[309,515],[282,421]],[[420,326],[458,330],[431,512],[394,506],[413,421]]]
+];
+function completeCollarSeams(image,mask,style,job,hands){
+ if(job===1)return;
+ const d=image.data,nx=avatarCostumeMaps[style][job][0],bottom=[430,0,414,428,428,414,450,423][job],near=new Uint8Array(360000);near.fill(12);
+ for(let y=290;y<bottom+5;y++)for(let x=Math.max(0,nx-80);x<Math.min(600,nx+81);x++){
+  const i=y*600+x;if(mask[i])near[i]=0;else{if(x)near[i]=Math.min(near[i],near[i-1]+1);if(y)near[i]=Math.min(near[i],near[i-600]+1)}
+ }
+ for(let y=bottom+4;y>=290;y--)for(let x=Math.min(599,nx+80);x>=Math.max(0,nx-80);x--){const i=y*600+x;if(x<599)near[i]=Math.min(near[i],near[i+1]+1);if(y<599)near[i]=Math.min(near[i],near[i+600]+1)}
+ for(let y=300;y<bottom;y++)for(let x=Math.max(0,nx-72);x<Math.min(600,nx+73);x++){
+  const i=y*600+x,k=i*4;if(mask[i]||near[i]>4||d[k+3]<8)continue;
+  const[h,s,v]=rgbHSV(d[k],d[k+1],d[k+2]);
+  const joint=Math.abs(x-nx)<60&&y<380;
+  if(hands?.[i]||!joint&&garmentSkinPixel(d,k,x,y,style,job,h,s)||garmentPropPixel(x,y,style,job,h,s,v))continue;
+  if(v>.75&&s<.3&&(h<65||h>320||s<.055))continue;
+  if((job===0||job===3||job===4)&&Math.abs(x-nx)<36&&y>350)continue;
+  if(job===3&&soundStraps[style].some(p=>inGarmentPolygon(x,y,p)))continue;
+  if(job===5&&x<(style===0?258:232)&&y<430)continue;
+  if(job===6&&(style===0?x>350&&y<525:x<300&&y<450))continue;
+  // Only the narrow boundary next to known fabric is recovered. Large neutral
+  // areas (the shirt, tools and background) keep their own painted material.
+  mask[i]=3;
+ }
+}
 function rgbHSL(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min,l=(max+min)/2;let h=0,s=0;if(delta){s=delta/(1-Math.abs(2*l-1));h=max===r?60*((g-b)/delta%6):max===g?60*((b-r)/delta+2):60*((r-g)/delta+4)}return [(h+360)%360,s,l]}
 function hslRGB(h,s,l){const v=l+s*Math.min(l,1-l);return hueRGB(h,v?2*(1-l/v):0,v)}
 function recolorGarment(g,style,job,colorIndex){
  const image=g.getImageData(0,0,600,600),d=image.data,mask=garmentMask(image,style,job),hex=clothingOptions[colorIndex][2],rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),[h,s,l]=rgbHSL(...rgb),hist=[new Uint32Array(256),new Uint32Array(256),new Uint32Array(256)],totals=[0,0,0];
- for(let i=0;i<mask.length;i++)if(mask[i]&&d[i*4+3]>100){const k=i*4,light=Math.round((Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/2);hist[mask[i]][light]++;totals[mask[i]]++}
+ for(let i=0;i<mask.length;i++)if(mask[i]&&mask[i]!==3&&d[i*4+3]>100){const k=i*4,light=Math.round((Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/2);hist[mask[i]][light]++;totals[mask[i]]++}
  const median=hist.map((bins,part)=>{let n=0;for(let i=0;i<256;i++){n+=bins[i];if(n>=totals[part]/2)return i/255}return .5});
  for(let i=0;i<mask.length;i++)if(mask[i]){
-  const k=i*4,part=mask[i],sourceL=(Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/510,delta=sourceL-(job===2?(median[1]+median[2])/2:median[part]),baseL=l,newL=Math.max(.08,Math.min(.94,baseL+delta*(job===2?.65:.95))),newS=s*(1-.25*Math.max(0,Math.min(1,delta/.23))),color=hslRGB(h,newS,newL);
+  const k=i*4,part=mask[i]===3?1:mask[i],sourceL=(Math.max(d[k],d[k+1],d[k+2])+Math.min(d[k],d[k+1],d[k+2]))/510,delta=sourceL-(job===2?(median[1]+median[2])/2:median[part]),baseL=l,newL=Math.max(.08,Math.min(.94,baseL+delta*(job===2?.65:.95))),newS=s*(mask[i]===3?.75:1)*(1-.25*Math.max(0,Math.min(1,delta/.23))),color=hslRGB(h,newS,newL);
   d[k]=color[0];d[k+1]=color[1];d[k+2]=color[2];
  }
  g.putImageData(image,0,0);
