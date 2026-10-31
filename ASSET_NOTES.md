@@ -35,3 +35,15 @@ assets/avatar-costumes-0.webp, assets/avatar-costumes-1.webp: 내장 이미지 �
 - 제작 프롬프트 요약: 기존 남자 캐릭터의 얼굴과 화풍을 유지하고 짧은 가르마 머리와 짧은 앞머리만 추가. 각 행은 한 머리 모양, 각 열은 뜬눈/작은 미소·웃는 눈/작은 미소·뜬눈/활짝 미소·웃는 눈/활짝 미소. 몸통·모자·안경·글자 없이 정면 머리와 짧은 목만 표현하며 투명 배경과 셀 사이 간격을 유지.
 - 옷은 원래 의상 아틀라스를 그대로 사용합니다. 직업별 옷감 영역과 피부·소품 영역을 구분하고, 고정 팔레트에 맞춰 밝기와 채도를 조정합니다. 명암·주름·투명도는 유지합니다. 촬영 감독은 셔츠와 멜빵에 연속적인 명암 변환을 적용해 소재 경계가 얼룩처럼 갈라지지 않게 합니다.
 - 남녀 16종 의상의 5가지 변경 색상, 옷 부분 295개 색상 표본, 주요 피부·소품 영역, 원래 색 복원을 확인했습니다. 머리 8종×8직업×눈/입 4조합×모자 3상태의 768개 배치를 확인했습니다.
+
+
+## 이미지 중심 시작 화면 (2026-10-31)
+
+- 파일: `assets/studio-home-v10.webp` (1448×1086px, 350,442바이트).
+- 방식: 내장 이미지 생성 도구. 기존 스튜디오 배너를 편집 대상으로, 기존 여자 직업 카드 그림을 캐릭터와 채색 기준으로 제공해 새 시작 화면용 그림을 제작했습니다. 불투명 원본을 WebP로 변환했습니다.
+- 화면 제목과 버튼은 그림에 넣지 않고 HTML로 표현하므로 화면 크기에 맞게 배치되고 읽을 수 있습니다. 기존 아바타·의상 이미지는 변경하지 않았습니다.
+- `assets/studio-mark.svg`는 페이지 로고와 파비콘을 위한 코드 기반의 작은 슬레이트 그림입니다.
+
+제작 프롬프트:
+
+Use case: illustration-story. Asset type: Korean elementary movie-career learning webapp home hero. Edit the provided studio banner into a new 4:3 landscape illustration for the right side of an editorial web hero. Input 1 is the studio banner edit target and scene reference; Input 2 is the existing female career card sheet, a strict character/painting style reference only. Recompose the studio into a complete cozy movie set with three cute Korean child movie crew members in the exact rounded proportions, brown eyes, warm painted gouache shading, brown hair and visible brush texture of Input 2: a teal-jacket director on the lower left holding a clapperboard, a camera operator to the lower right operating a black cinema camera on a tripod, and a purple-clothed boom-microphone operator behind them. They are collaborating on one film. Keep the magical warm studio atmosphere of Input 1, ochre stage floor, peach curtains, powder-blue scenic landscape backdrop, a soft glowing barn-door movie light in the upper left, a small film reel and prop box near the lower right. Charming professional children's picture-book illustration, warm cream paper, muted teal, peach, ochre, lavender. Compose naturally with clear central silhouettes and useful separation, all main people and equipment comfortably inside frame with 5 percent margins; camera tripod feet visible. No words, no lettering, no brand marks, no interface, no buttons, no border, no captions, no giant character mascot. This is a refined inviting cover illustration, not a busy collage. Preserve the existing career character visual language instead of switching to 3D, flat vectors or photorealism. Full opaque rectangular painting.
