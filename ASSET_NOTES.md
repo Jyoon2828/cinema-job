@@ -47,3 +47,23 @@ assets/avatar-costumes-0.webp, assets/avatar-costumes-1.webp: 내장 이미지 �
 제작 프롬프트:
 
 Use case: illustration-story. Asset type: Korean elementary movie-career learning webapp home hero. Edit the provided studio banner into a new 4:3 landscape illustration for the right side of an editorial web hero. Input 1 is the studio banner edit target and scene reference; Input 2 is the existing female career card sheet, a strict character/painting style reference only. Recompose the studio into a complete cozy movie set with three cute Korean child movie crew members in the exact rounded proportions, brown eyes, warm painted gouache shading, brown hair and visible brush texture of Input 2: a teal-jacket director on the lower left holding a clapperboard, a camera operator to the lower right operating a black cinema camera on a tripod, and a purple-clothed boom-microphone operator behind them. They are collaborating on one film. Keep the magical warm studio atmosphere of Input 1, ochre stage floor, peach curtains, powder-blue scenic landscape backdrop, a soft glowing barn-door movie light in the upper left, a small film reel and prop box near the lower right. Charming professional children's picture-book illustration, warm cream paper, muted teal, peach, ochre, lavender. Compose naturally with clear central silhouettes and useful separation, all main people and equipment comfortably inside frame with 5 percent margins; camera tripod feet visible. No words, no lettering, no brand marks, no interface, no buttons, no border, no captions, no giant character mascot. This is a refined inviting cover illustration, not a busy collage. Preserve the existing career character visual language instead of switching to 3D, flat vectors or photorealism. Full opaque rectangular painting.
+
+
+## 전체 화면 표지 · 여덟 영화 직업 · 둥근 글씨 (2026-10-31)
+
+내장 이미지 생성 도구로 v10 촬영장 그림을 확장·재구성했습니다. 남자 직업 카드와 사용자가 제시한 전체 화면 예시를 참고해 기존 화풍을 유지했습니다. 그림의 제목과 버튼은 HTML이며 일러스트에는 글자가 없습니다.
+
+- `assets/studio-home-wide-v11.webp`: 1672×941, 넓은 가로 화면.
+- `assets/studio-home-classic-v11.webp`: 1448×1086, 일반 가로 화면.
+- `assets/studio-home-portrait-v11.webp`: 1122×1402, 세로 화면.
+- 세 그림 모두 남자 배우를 포함해 감독·촬영·음향·조명·미술·편집·시나리오 여덟 역할을 표현합니다. 남자 배우는 빨간 의상을 입고 가운데에서 연기합니다.
+- 원본의 불투명 배경을 유지하고 WebP로 변환했습니다. 아바타·얼굴·의상 파일은 바꾸지 않았습니다.
+- 제목용 Bagel Fat One, 버튼·활동·카드 제목용 Jua를 공식 Google Fonts 저장소에서 받아 글리프를 바꾸지 않고 WOFF2로 변환했습니다. 출처와 OFL 전문은 `assets/fonts/`에 있습니다. 본문은 기존 글씨체입니다.
+
+제작 프롬프트 요약 (내장 도구의 이미지 편집 모드):
+
+Wide: Recompose and extend the original warm gouache movie studio into a 16:9 full-bleed cover. Preserve the existing brown eyes, cute Korean child proportions, golden lighting and peach curtains. Show exactly eight distinct careers: girl teal director with a clapperboard, prominent boy actor in a red theatrical jacket with a script, boy camera operator in blue overalls, girl sound operator in a lavender hoodie with headphones and a boom, boy lighting technician in yellow, girl art director in mint with a miniature set and color swatches, boy film editor in pink at a monitor, girl screenwriter in navy with a notebook. Reserve the upper third as open sky and scenery for an HTML title and bottom center as stage floor for the button. No words, interface, border, logos or watermarks. Preserve the original movie career painting style.
+
+Classic landscape: Recompose the wide painting into 4:3 instead of cropping it. Preserve all eight identities and costumes, bring the left lighting boy and right screenwriter inward, keep all faces visible in the middle-lower group, retain clear upper sky for the title and calm bottom floor for the button. No lettering or interface; same warm gouache painting.
+
+Portrait: Recompose the same eight children into a 4:5 portrait cover, arranging the group in staggered rows instead of cropping the panorama. Keep the red-jacket boy actor prominent in the center and each face visible, retain a quiet upper third for the title and clear lower floor for the button. Same painting, colors and tools; no words, logos or interface.
