@@ -67,3 +67,12 @@ Wide: Recompose and extend the original warm gouache movie studio into a 16:9 fu
 Classic landscape: Recompose the wide painting into 4:3 instead of cropping it. Preserve all eight identities and costumes, bring the left lighting boy and right screenwriter inward, keep all faces visible in the middle-lower group, retain clear upper sky for the title and calm bottom floor for the button. No lettering or interface; same warm gouache painting.
 
 Portrait: Recompose the same eight children into a 4:5 portrait cover, arranging the group in staggered rows instead of cropping the panorama. Keep the red-jacket boy actor prominent in the center and each face visible, retain a quiet upper third for the title and clear lower floor for the button. Same painting, colors and tools; no words, logos or interface.
+
+
+## 의상 디테일과 직업 탐색 보정 (2026-10-31)
+
+- 원본 일러스트와 글꼴 파일은 수정하지 않았습니다. 앱의 옷감 판별 범위와 소품 경계를 보정했습니다.
+- 감독 의상의 슬레이트 주변과 아래 옷자락, 촬영 의상의 멜빵·옷깃·소매, 조명 의상의 손 주변에 남는 원래 색을 줄였습니다. 중성색 장비·검은 안쪽 옷과 따뜻한 피부 그림자를 따로 보호합니다.
+- 가는 주름과 떨어진 작은 옷감 영역을 가까운 본래 옷감과 연결해 같은 색으로 바꿉니다. 옷의 명암·주름·투명도와 직업 도구의 형태를 유지합니다.
+- 남녀 16개 의상 × 변경 색상 5종을 점검했습니다. 기존 색상 표본 295개에 경계·소매·음영 표본 305개를 더했고, 별도 보호 표본 90개와 주요 피부·소품 영역도 확인했습니다.
+- 직업 탐색은 여자 감독·촬영·미술·작가, 남자 배우·음향·조명·편집 그림을 함께 표시합니다. 탐색 화면에는 성별 선택이 없으며 얼굴 꾸미기에서 ‘남·여’를 선택합니다.
