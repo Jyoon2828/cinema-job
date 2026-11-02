@@ -83,7 +83,14 @@ function queueWritingPreview(editor){
  if(editor.dataset.composing==='true')return;
  writingPreviewTimer=setTimeout(()=>draw(),120);
 }
+function focusWritingEditor(editor){
+ if(editor&&editor.isConnected&&editor.dataset.composing!=='true'&&document.activeElement!==editor){
+  editor.focus({preventScroll:true});
+ }
+}
 function bindWritingEditor(editor){
+ // Clicking or tapping must focus the native editor before typing starts.
+ for(const event of ['pointerdown','click'])editor.addEventListener(event,()=>focusWritingEditor(editor));
  editor.addEventListener('compositionstart',()=>{
   editor.dataset.composing='true';
   clearTimeout(writingPreviewTimer);
@@ -106,7 +113,11 @@ function renderWriting(j){
  writePage=Math.max(0,Math.min(writingFields.length-1,writePage));
  const [key,label,hint,max]=writingFields[writePage],id='research-'+key;
  stage.innerHTML=`<div class="stageHeading"><h2>내가 알아본 ${j.n}</h2><button type="button" id="readInfo">자료 보기</button></div><div class="writeTabs">${writingFields.map((field,i)=>`<button type="button" data-write="${i}" class="${writePage===i?'active':''}" aria-current="${writePage===i?'step':'false'}">${i+1}. ${field[1]}</button>`).join('')}</div><div class="writing"><label for="${id}">${label}<small>${max}자 이내</small></label><p id="writingHint">${hint}</p>${key==='name'?`<input type="text" id="${id}" name="${key}" data-writing-field="${key}" maxlength="${max}" inputmode="text" autocomplete="off" aria-describedby="writingHint writingCount" placeholder="이름 또는 별명" value="${esc(state[key])}">`:`<textarea id="${id}" name="${key}" data-writing-field="${key}" maxlength="${max}" inputmode="text" aria-describedby="writingHint writingCount" placeholder="${hint}">${esc(state[key])}</textarea>`}<span id="writingCount" class="charcount">${state[key].length} / ${max}</span></div><div class="bottom"><button type="button" id="back">${writePage===0?'← 얼굴 만들기':'← 이전 항목'}</button><span>${writePage+1} / 4</span><button type="button" class="primary" id="next">${writePage===3?'카드 완성하기 →':'다음 항목 →'}</button></div>`;
- bindWritingEditor(stage.querySelector('[data-writing-field]'));
+ const editor=stage.querySelector('[data-writing-field]');
+ bindWritingEditor(editor);
+ stage.querySelector('.writing').addEventListener('click',event=>{
+  if(!event.target.closest('input,textarea,label,button,a'))focusWritingEditor(editor);
+ });
  $('#readInfo').onclick=()=>{saveActiveWriting();openInfo()};
  stage.querySelectorAll('[data-write]').forEach(button=>button.onclick=()=>{
   saveActiveWriting();writePage=+button.dataset.write;render();
@@ -123,6 +134,9 @@ function renderWriting(j){
    writePage=!state.work.trim()?1:2;render();
   }else go(3);
  };
+ // This render runs inside the student's stage/tab button action, including
+ // the first entry. Focus synchronously so tablet keyboards can open too.
+ focusWritingEditor(editor);
 }
 function pagesForJob(){const j=jobs[state.job],r=research[state.job];const holder=document.createElement('div');holder.innerHTML=researchPanel();const links=[...holder.querySelectorAll('a')].map(a=>({title:a.querySelector('strong')?.textContent||a.textContent,provider:a.querySelector('small')?.textContent||'',note:a.querySelector('span')?.textContent||'',url:a.getAttribute('href')}));const e=moreJobInfo[state.job];return [
 {group:'직업 소개',title:'어떤 일을 하나요?',body:`<p>${j.work}</p><p class="tools">${j.tag}</p>`},

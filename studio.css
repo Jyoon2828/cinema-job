@@ -187,7 +187,11 @@
  .writing textarea{flex:1 0 96px;min-height:96px}
  .writing input,.writing textarea{
   pointer-events:auto;touch-action:auto;user-select:text;-webkit-user-select:text;
+  cursor:text;caret-color:#253e36;
  }
+ .writing{cursor:text}
+ .writing input:focus,.writing textarea:focus{outline:3px solid #d39a49;outline-offset:2px}
+ .writing:focus-within{border-color:#95ad94}
 }
 @media screen and (max-height:500px){
  body[data-screen="activity"][data-stage="2"]{grid-template-rows:42px minmax(0,1fr)}
